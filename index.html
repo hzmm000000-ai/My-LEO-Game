@@ -2,32 +2,32 @@
 <html lang="my">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Member - Dice Game</title>
-    <!-- Firebase SDK Setup -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Updated Firebase SDK Setup -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { background: #16213e; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 450px; width: 100%; }
-        h1 { color: #e94560; margin-bottom: 10px; }
-        .login-box { margin-top: 20px; }
-        input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #0f3460; background: #0f3460; color: #fff; text-align: center; font-size: 16px; outline: none; }
-        .info-panel { background: #0f3460; padding: 15px; border-radius: 10px; margin: 20px 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background: #16213e; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; width: 100%; }
+        h1 { color: #e94560; margin-bottom: 15px; font-size: 24px; }
+        .login-box { margin-top: 10px; }
+        input[type="text"] { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 2px solid #0f3460; background: #0f3460; color: #fff; text-align: center; font-size: 18px; outline: none; }
+        .info-panel { background: #0f3460; padding: 15px; border-radius: 10px; margin: 15px 0; }
         .info-panel p { margin: 5px 0; font-size: 16px; }
-        .highlight { color: #f8b500; font-weight: bold; font-size: 18px; }
-        .dice-container { display: flex; justify-content: center; gap: 15px; margin: 25px 0; }
+        .highlight { color: #f8b500; font-weight: bold; font-size: 20px; }
+        .dice-container { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
         .dice { width: 65px; height: 65px; background: #fff; color: #1a1a2e; font-size: 32px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .roll-animation { animation: roll 0.6s ease-in-out; }
         @keyframes roll { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); } }
-        button { background: #e94560; color: #fff; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #ff6b81; }
-        button:disabled { background: #555; cursor: not-allowed; }
+        .btn-main { width: 100%; background: #e94560; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s; touch-action: manipulation; }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
         .status-msg { margin-top: 15px; font-size: 16px; min-height: 24px; font-weight: bold; }
         .win { color: #4ecc71; }
         .lose { color: #e74c3c; }
-        .user-tag { color: #38bdf8; font-weight: bold; margin-bottom: 10px; }
+        .user-tag { color: #38bdf8; font-weight: bold; margin-bottom: 10px; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -37,9 +37,9 @@
 
     <!-- Login Screen -->
     <div id="login-section" class="login-box">
-        <p style="margin-bottom: 10px;">Username ရိုက်ထည့်ပါ</p>
-        <input type="text" id="username-input" placeholder="Enter Username...">
-        <button onclick="loginUser()">Game သို့ ဝင်မည်</button>
+        <p style="margin-bottom: 12px;">Username ရိုက်ထည့်ပါ</p>
+        <input type="text" id="username-input" placeholder="Enter Username..." autocomplete="off">
+        <button class="btn-main" id="login-btn" onclick="loginUser()">Game သို့ ဝင်မည်</button>
     </div>
 
     <!-- Game Screen -->
@@ -56,7 +56,7 @@
             <div class="dice" id="dice3">1</div>
         </div>
 
-        <button id="roll-btn" onclick="rollDice()">Spin Dice</button>
+        <button class="btn-main" id="roll-btn" onclick="rollDice()">Spin Dice</button>
         <div class="status-msg" id="status-text"></div>
     </div>
 </div>
@@ -84,13 +84,14 @@
     let isRolling = false;
 
     function loginUser() {
-        const nameInput = document.getElementById('username-input').value.trim().toLowerCase();
+        const input = document.getElementById('username-input');
+        const nameInput = input.value.trim().toLowerCase();
+        
         if(!nameInput) {
-            alert('Username ထည့်ပါ။');
+            alert('ကျေးဇူးပြု၍ Username ရိုက်ထည့်ပါ');
             return;
         }
-        
-        // နာမည်တူရင် မထပ်အောင် Random Session Tag လေး ပေါင်းထည့်ပေးထားသည်
+
         currentUser = nameInput;
         document.getElementById('display-username').innerText = currentUser;
         document.getElementById('login-section').style.display = 'none';
@@ -116,7 +117,7 @@
                 userSpinsLeft = (data.spinsLeft !== undefined) ? data.spinsLeft : 0;
                 userForcedDice = data.forcedDice || null;
             } else {
-                // အကောင့်အသစ်ဝင်လာပါက အလိုအလျောက် Spin 5 ကြိမ် ပေးမည်
+                // အကောင့်အသစ်များအတွက် အလိုအလျောက် Spin 5 ကြိမ် ပေးမည်
                 userSpinsLeft = 5;
                 db.ref('users/' + currentUser).set({
                     spinsLeft: 5,
@@ -131,11 +132,11 @@
         document.getElementById('spins-left').innerText = userSpinsLeft;
         const btn = document.getElementById('roll-btn');
 
-        if (isRolling) return; // Roll လုပ်နေချိန် ဘာမှမလုပ်ပါ
+        if (isRolling) return;
 
         if (userSpinsLeft <= 0) {
             btn.disabled = true;
-            document.getElementById('status-text').innerText = "Spins finished! Ask Admin for more spins.";
+            document.getElementById('status-text').innerText = "Spins ကုန်သွားပါပြီ။ Admin ထံ Spin တောင်းပါ။";
             document.getElementById('status-text').className = "status-msg lose";
         } else {
             btn.disabled = false;
@@ -162,11 +163,11 @@
             let res1, res2, res3;
 
             if (userForcedDice && userForcedDice.length === 3) {
-                res1 = userForcedDice[0];
-                res2 = userForcedDice[1];
-                res3 = userForcedDice[2];
+                res1 = parseInt(userForcedDice[0]);
+                res2 = parseInt(userForcedDice[1]);
+                res3 = parseInt(userForcedDice[2]);
                 
-                // Clear forced dice after 1 roll
+                // Forced Dice ကို ၁ ကြိမ် သုံးပြီးပါက ပြန်ဖျက်မည်
                 db.ref('users/' + currentUser + '/forcedDice').remove();
             } else {
                 res1 = Math.floor(Math.random() * 6) + 1;
@@ -182,7 +183,7 @@
             dice2.classList.remove('roll-animation');
             dice3.classList.remove('roll-animation');
 
-            // Decrease Spin Count
+            // Spin Count လျှော့မည်
             userSpinsLeft -= 1;
             db.ref('users/' + currentUser + '/spinsLeft').set(userSpinsLeft);
 
@@ -191,14 +192,14 @@
             const statusText = document.getElementById('status-text');
 
             if (isWin) {
-                statusText.innerText = "Congratulations! You matched all numbers!";
+                statusText.innerText = "ဂုဏ်ယူပါတယ်။ ဂဏန်း ၃ လုံးစလုံး ကိုက်ညီသွားပါပြီ။";
                 statusText.className = "status-msg win";
             } else {
-                statusText.innerText = "Try again!";
+                statusText.innerText = "ထပ်မံ ကြိုးစားပါ။";
                 statusText.className = "status-msg lose";
             }
 
-            // Send Realtime Log to Admin
+            // Realtime Log ကို Admin ဆီ ပို့မည်
             db.ref('logs').push({
                 username: currentUser,
                 rolled: `${res1} - ${res2} - ${res3}`,
