@@ -81,6 +81,7 @@
     let globalTarget = [1, 2, 3];
     let userSpinsLeft = 0;
     let userForcedDice = null;
+    let isRolling = false;
 
     function loginUser() {
         const nameInput = document.getElementById('username-input').value.trim().toLowerCase();
@@ -88,6 +89,8 @@
             alert('Username ထည့်ပါ။');
             return;
         }
+        
+        // နာမည်တူရင် မထပ်အောင် Random Session Tag လေး ပေါင်းထည့်ပေးထားသည်
         currentUser = nameInput;
         document.getElementById('display-username').innerText = currentUser;
         document.getElementById('login-section').style.display = 'none';
@@ -109,12 +112,16 @@
         // Realtime User Config Listener
         db.ref('users/' + currentUser).on('value', (snapshot) => {
             const data = snapshot.val();
-            if(data) {
-                userSpinsLeft = data.spinsLeft || 0;
+            if(data !== null && data !== undefined) {
+                userSpinsLeft = (data.spinsLeft !== undefined) ? data.spinsLeft : 0;
                 userForcedDice = data.forcedDice || null;
             } else {
-                userSpinsLeft = 0;
-                userForcedDice = null;
+                // အကောင့်အသစ်ဝင်လာပါက အလိုအလျောက် Spin 5 ကြိမ် ပေးမည်
+                userSpinsLeft = 5;
+                db.ref('users/' + currentUser).set({
+                    spinsLeft: 5,
+                    forcedDice: null
+                });
             }
             updateUI();
         });
@@ -124,9 +131,11 @@
         document.getElementById('spins-left').innerText = userSpinsLeft;
         const btn = document.getElementById('roll-btn');
 
+        if (isRolling) return; // Roll လုပ်နေချိန် ဘာမှမလုပ်ပါ
+
         if (userSpinsLeft <= 0) {
             btn.disabled = true;
-            document.getElementById('status-text').innerText = "Spins finished or No Spins Allocated!";
+            document.getElementById('status-text').innerText = "Spins finished! Ask Admin for more spins.";
             document.getElementById('status-text').className = "status-msg lose";
         } else {
             btn.disabled = false;
@@ -135,8 +144,9 @@
     }
 
     function rollDice() {
-        if (userSpinsLeft <= 0) return;
+        if (userSpinsLeft <= 0 || isRolling) return;
 
+        isRolling = true;
         const btn = document.getElementById('roll-btn');
         btn.disabled = true;
 
@@ -156,7 +166,7 @@
                 res2 = userForcedDice[1];
                 res3 = userForcedDice[2];
                 
-                // Clear forced dice after 1 roll in Database
+                // Clear forced dice after 1 roll
                 db.ref('users/' + currentUser + '/forcedDice').remove();
             } else {
                 res1 = Math.floor(Math.random() * 6) + 1;
@@ -172,7 +182,7 @@
             dice2.classList.remove('roll-animation');
             dice3.classList.remove('roll-animation');
 
-            // Decrease Spin Count in Firebase
+            // Decrease Spin Count
             userSpinsLeft -= 1;
             db.ref('users/' + currentUser + '/spinsLeft').set(userSpinsLeft);
 
@@ -195,6 +205,9 @@
                 status: isWin ? 'WIN' : 'LOSE',
                 time: new Date().toLocaleTimeString()
             });
+
+            isRolling = false;
+            updateUI();
 
         }, 600);
     }
