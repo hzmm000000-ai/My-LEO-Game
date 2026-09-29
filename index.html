@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Member - Dice Game</title>
+    <!-- Firebase SDK Setup -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -59,19 +62,27 @@
 </div>
 
 <script>
+    // Firebase Config Keys
+    const firebaseConfig = {
+        apiKey: "AIzaSyDemoKeyOnlyReplaceWithYours",
+        authDomain: "dice-game-demo.firebaseapp.com",
+        databaseURL: "https://dice-game-demo-default-rtdb.firebaseio.com",
+        projectId: "dice-game-demo",
+        storageBucket: "dice-game-demo.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:demo"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     let currentUser = "";
-
-    function getAdminData() {
-        const data = localStorage.getItem('diceGameAdmin');
-        return data ? JSON.parse(data) : { target: [1, 2, 3], userSettings: {} };
-    }
-
-    function saveAdminData(data) {
-        localStorage.setItem('diceGameAdmin', JSON.stringify(data));
-    }
+    let globalTarget = [1, 2, 3];
+    let userSpinsLeft = 0;
+    let userForcedDice = null;
 
     function loginUser() {
-        const nameInput = document.getElementById('username-input').value.trim();
+        const nameInput = document.getElementById('username-input').value.trim().toLowerCase();
         if(!nameInput) {
             alert('Username ထည့်ပါ။');
             return;
@@ -80,26 +91,39 @@
         document.getElementById('display-username').innerText = currentUser;
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('game-section').style.display = 'block';
-        updateUI();
+
+        listenToFirebase();
     }
 
-    function getUserSpinsLeft(gameData) {
-        if (gameData.userSettings && gameData.userSettings[currentUser]) {
-            return gameData.userSettings[currentUser].spinsLeft || 0;
-        }
-        return 0;
+    function listenToFirebase() {
+        // Realtime Global Target Numbers Listener
+        db.ref('globalTarget').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                globalTarget = data;
+                document.getElementById('target-display').innerText = globalTarget.join(' - ');
+            }
+        });
+
+        // Realtime User Config Listener
+        db.ref('users/' + currentUser).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                userSpinsLeft = data.spinsLeft || 0;
+                userForcedDice = data.forcedDice || null;
+            } else {
+                userSpinsLeft = 0;
+                userForcedDice = null;
+            }
+            updateUI();
+        });
     }
 
     function updateUI() {
-        if(!currentUser) return;
-        const gameData = getAdminData();
-        const spins = getUserSpinsLeft(gameData);
-
-        document.getElementById('target-display').innerText = gameData.target.join(' - ');
-        document.getElementById('spins-left').innerText = spins;
-
+        document.getElementById('spins-left').innerText = userSpinsLeft;
         const btn = document.getElementById('roll-btn');
-        if (spins <= 0) {
+
+        if (userSpinsLeft <= 0) {
             btn.disabled = true;
             document.getElementById('status-text').innerText = "Spins finished or No Spins Allocated!";
             document.getElementById('status-text').className = "status-msg lose";
@@ -110,10 +134,7 @@
     }
 
     function rollDice() {
-        let gameData = getAdminData();
-        let userConfig = gameData.userSettings ? gameData.userSettings[currentUser] : null;
-
-        if (!userConfig || userConfig.spinsLeft <= 0) return;
+        if (userSpinsLeft <= 0) return;
 
         const btn = document.getElementById('roll-btn');
         btn.disabled = true;
@@ -129,15 +150,14 @@
         setTimeout(() => {
             let res1, res2, res3;
 
-            // Check if Admin set specific controlled numbers for this user
-            if (userConfig.forcedDice && userConfig.forcedDice.length === 3) {
-                res1 = userConfig.forcedDice[0];
-                res2 = userConfig.forcedDice[1];
-                res3 = userConfig.forcedDice[2];
-                // Reset forced outcome after 1 forced roll (optional, clear to random afterward)
-                userConfig.forcedDice = null;
+            if (userForcedDice && userForcedDice.length === 3) {
+                res1 = userForcedDice[0];
+                res2 = userForcedDice[1];
+                res3 = userForcedDice[2];
+                
+                // Clear forced dice after 1 roll in Database
+                db.ref('users/' + currentUser + '/forcedDice').remove();
             } else {
-                // Random Roll if no forced numbers set
                 res1 = Math.floor(Math.random() * 6) + 1;
                 res2 = Math.floor(Math.random() * 6) + 1;
                 res3 = Math.floor(Math.random() * 6) + 1;
@@ -151,13 +171,12 @@
             dice2.classList.remove('roll-animation');
             dice3.classList.remove('roll-animation');
 
-            // Deduct spin count for this specific user
-            userConfig.spinsLeft -= 1;
-            gameData.userSettings[currentUser] = userConfig;
-            saveAdminData(gameData);
+            // Decrease Spin Count in Firebase
+            userSpinsLeft -= 1;
+            db.ref('users/' + currentUser + '/spinsLeft').set(userSpinsLeft);
 
-            // Win Condition Check
-            const isWin = (res1 === gameData.target[0] && res2 === gameData.target[1] && res3 === gameData.target[2]);
+            // Win Check
+            const isWin = (res1 === globalTarget[0] && res2 === globalTarget[1] && res3 === globalTarget[2]);
             const statusText = document.getElementById('status-text');
 
             if (isWin) {
@@ -168,24 +187,16 @@
                 statusText.className = "status-msg lose";
             }
 
-            recordResultToAdmin(currentUser, [res1, res2, res3], isWin);
-            updateUI();
+            // Send Realtime Log to Admin
+            db.ref('logs').push({
+                username: currentUser,
+                rolled: `${res1} - ${res2} - ${res3}`,
+                status: isWin ? 'WIN' : 'LOSE',
+                time: new Date().toLocaleTimeString()
+            });
+
         }, 600);
     }
-
-    function recordResultToAdmin(user, result, isWin) {
-        let logs = JSON.parse(localStorage.getItem('diceGameLogs')) || [];
-        const newLog = {
-            username: user,
-            rolled: result.join(' - '),
-            status: isWin ? 'WIN' : 'LOSE',
-            time: new Date().toLocaleTimeString()
-        };
-        logs.unshift(newLog);
-        localStorage.setItem('diceGameLogs', JSON.stringify(logs));
-    }
-
-    window.addEventListener('storage', updateUI);
 </script>
 
 </body>
