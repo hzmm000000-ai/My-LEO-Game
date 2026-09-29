@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Dice Control</title>
+    <title>Admin Dashboard - Live Control</title>
+    <!-- Firebase SDK Setup -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -18,7 +21,6 @@
         .btn-target { background: #059669; }
         .btn-target:hover { background: #047857; }
         .status { margin-top: 10px; text-align: center; color: #22c55e; font-weight: bold; }
-        
         .logs-card { background: #1e293b; padding: 25px; border-radius: 12px; width: 100%; max-width: 650px; margin-bottom: 25px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #334155; }
@@ -29,7 +31,7 @@
 </head>
 <body>
 
-<!-- Global Target Number Config -->
+<!-- Global Target Setup -->
 <div class="admin-card">
     <h1>Global Target Number Setup</h1>
     <div class="form-group">
@@ -44,7 +46,7 @@
     <div class="status" id="global-status"></div>
 </div>
 
-<!-- Specific User Settings (Spins & Control Outcome) -->
+<!-- Specific User Setup -->
 <div class="admin-card" style="border: 2px solid #38bdf8;">
     <h2 style="color: #f8b500;">User Specific Setup & Control</h2>
 
@@ -55,7 +57,7 @@
 
     <div class="form-group">
         <label>Set Allowed Spins Count (အဆိုပါ Member လှည့်ခွင့် အကြိမ်ရေ)</label>
-        <input type="number" id="user-spins" min="1" value="5">
+        <input type="number" id="user-spins" min="0" value="5">
     </div>
 
     <div class="form-group">
@@ -67,13 +69,13 @@
         </div>
     </div>
 
-    <button class="btn-target" onclick="saveUserConfig()">Save User Settings</button>
+    <button class="btn-target" onclick="saveUserConfig()">Save User Config</button>
     <div class="status" id="user-status"></div>
 </div>
 
-<!-- Active User Configurations List -->
+<!-- Active Users Table -->
 <div class="logs-card">
-    <h2>User Allocations & Configs</h2>
+    <h2>Users Allocations</h2>
     <table>
         <thead>
             <tr>
@@ -86,7 +88,7 @@
     </table>
 </div>
 
-<!-- Live Logs & Winner Table -->
+<!-- Live Logs Table -->
 <div class="logs-card">
     <h2>Live Game Logs & Winners</h2>
     <table>
@@ -104,75 +106,66 @@
 </div>
 
 <script>
-    function getAdminData() {
-        const data = localStorage.getItem('diceGameAdmin');
-        return data ? JSON.parse(data) : { target: [1, 2, 3], userSettings: {} };
-    }
+    // Firebase Config Keys
+    const firebaseConfig = {
+        apiKey: "AIzaSyDemoKeyOnlyReplaceWithYours",
+        authDomain: "dice-game-demo.firebaseapp.com",
+        databaseURL: "https://dice-game-demo-default-rtdb.firebaseio.com",
+        projectId: "dice-game-demo",
+        storageBucket: "dice-game-demo.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:demo"
+    };
 
-    function loadAdminSettings() {
-        const parsed = getAdminData();
-        document.getElementById('t1').value = parsed.target[0] || 1;
-        document.getElementById('t2').value = parsed.target[1] || 2;
-        document.getElementById('t3').value = parsed.target[2] || 3;
-        renderUserConfigs();
-    }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     function saveGlobalTarget() {
-        let adminData = getAdminData();
-        adminData.target = [
-            parseInt(document.getElementById('t1').value) || 1,
-            parseInt(document.getElementById('t2').value) || 1,
-            parseInt(document.getElementById('t3').value) || 1
-        ];
+        const t1 = parseInt(document.getElementById('t1').value) || 1;
+        const t2 = parseInt(document.getElementById('t2').value) || 1;
+        const t3 = parseInt(document.getElementById('t3').value) || 1;
 
-        localStorage.setItem('diceGameAdmin', JSON.stringify(adminData));
-        showStatus('global-status', 'Target numbers updated!');
+        db.ref('globalTarget').set([t1, t2, t3]);
+        showStatus('global-status', 'Target Numbers Updated!');
     }
 
     function saveUserConfig() {
-        const username = document.getElementById('target-username').value.trim();
+        const username = document.getElementById('target-username').value.trim().toLowerCase();
         const spins = parseInt(document.getElementById('user-spins').value) || 0;
 
         const u1 = parseInt(document.getElementById('u1').value);
         const u2 = parseInt(document.getElementById('u2').value);
         const u3 = parseInt(document.getElementById('u3').value);
 
-        if(!username) {
+        if (!username) {
             alert('Username ထည့်ပေးပါ။');
             return;
         }
 
-        let adminData = getAdminData();
-        if(!adminData.userSettings) adminData.userSettings = {};
-
         let forced = (u1 && u2 && u3) ? [u1, u2, u3] : null;
 
-        adminData.userSettings[username] = {
+        db.ref('users/' + username).set({
             spinsLeft: spins,
             forcedDice: forced
-        };
+        });
 
-        localStorage.setItem('diceGameAdmin', JSON.stringify(adminData));
+        showStatus('user-status', `Updated settings for "${username}"!`);
 
-        showStatus('user-status', `Settings updated for "${username}"!`);
-        
-        // Reset Inputs
         document.getElementById('target-username').value = '';
         document.getElementById('u1').value = '';
         document.getElementById('u2').value = '';
         document.getElementById('u3').value = '';
-
-        renderUserConfigs();
     }
 
-    function renderUserConfigs() {
-        const adminData = getAdminData();
+    // Realtime Listeners for Admin Tables
+    db.ref('users').on('value', (snapshot) => {
         const tbody = document.getElementById('user-configs-body');
         tbody.innerHTML = '';
+        const users = snapshot.val();
 
-        if (adminData.userSettings) {
-            for (let user in adminData.userSettings) {
-                const config = adminData.userSettings[user];
+        if (users) {
+            for (let user in users) {
+                const config = users[user];
                 const tr = document.createElement('tr');
                 const forcedText = config.forcedDice ? config.forcedDice.join(' - ') : 'None (Random)';
 
@@ -184,47 +177,41 @@
                 tbody.appendChild(tr);
             }
         }
+    });
+
+    db.ref('logs').on('value', (snapshot) => {
+        const tbody = document.getElementById('logs-table-body');
+        tbody.innerHTML = '';
+        const logs = snapshot.val();
+
+        if (logs) {
+            const logsArray = Object.values(logs).reverse();
+            logsArray.forEach(log => {
+                const tr = document.createElement('tr');
+                const statusBadge = log.status === 'WIN' 
+                    ? `<span class="badge-win">WIN (Matched)</span>` 
+                    : `<span class="badge-lose">LOSE</span>`;
+
+                tr.innerHTML = `
+                    <td style="color: #38bdf8; font-weight: bold;">${log.username}</td>
+                    <td>${log.rolled}</td>
+                    <td>${statusBadge}</td>
+                    <td>${log.time}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    });
+
+    function clearLogs() {
+        db.ref('logs').remove();
     }
 
-    function showStatus(elementId, msg) {
-        const status = document.getElementById(elementId);
+    function showStatus(id, msg) {
+        const status = document.getElementById(id);
         status.innerText = msg;
         setTimeout(() => { status.innerText = ""; }, 3000);
     }
-
-    function loadLogs() {
-        const logs = JSON.parse(localStorage.getItem('diceGameLogs')) || [];
-        const tbody = document.getElementById('logs-table-body');
-        tbody.innerHTML = '';
-
-        logs.forEach(log => {
-            const tr = document.createElement('tr');
-            const statusBadge = log.status === 'WIN' 
-                ? `<span class="badge-win">WIN (Matched)</span>` 
-                : `<span class="badge-lose">LOSE</span>`;
-
-            tr.innerHTML = `
-                <td style="color: #38bdf8; font-weight: bold;">${log.username}</td>
-                <td>${log.rolled}</td>
-                <td>${statusBadge}</td>
-                <td>${log.time}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-        
-        // Refresh User configs display too
-        renderUserConfigs();
-    }
-
-    function clearLogs() {
-        localStorage.removeItem('diceGameLogs');
-        loadLogs();
-    }
-
-    window.addEventListener('storage', loadLogs);
-
-    loadAdminSettings();
-    loadLogs();
 </script>
 
 </body>
