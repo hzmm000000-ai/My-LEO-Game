@@ -1,224 +1,114 @@
 <!DOCTYPE html>
-<html lang="my">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Member - Dice Game</title>
-    <!-- Firebase SDK v9 Compact -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
-        .container { background: #16213e; padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; width: 100%; }
-        h1 { color: #e94560; margin-bottom: 15px; font-size: 24px; }
-        .login-box { margin-top: 10px; }
-        input[type="text"] { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 2px solid #0f3460; background: #0f3460; color: #fff; text-align: center; font-size: 18px; outline: none; }
-        .info-panel { background: #0f3460; padding: 15px; border-radius: 10px; margin: 15px 0; }
-        .info-panel p { margin: 5px 0; font-size: 16px; }
-        .highlight { color: #f8b500; font-weight: bold; font-size: 20px; }
-        .dice-container { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
-        .dice { width: 65px; height: 65px; background: #fff; color: #1a1a2e; font-size: 32px; font-weight: bold; display: flex; justify-content: center; align-items: center; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .roll-animation { animation: roll 0.6s ease-in-out; }
-        @keyframes roll { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); } }
-        .btn-main { width: 100%; background: #e94560; color: #fff; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 30px; cursor: pointer; transition: 0.2s; touch-action: manipulation; }
-        .btn-main:active { transform: scale(0.98); }
-        .btn-main:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
-        .status-msg { margin-top: 15px; font-size: 16px; min-height: 24px; font-weight: bold; }
-        .win { color: #4ecc71; }
-        .lose { color: #e74c3c; }
-        .user-tag { color: #38bdf8; font-weight: bold; margin-bottom: 10px; word-break: break-all; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h1>Dice Game</h1>
-
-    <!-- Login Screen -->
-    <div id="login-section" class="login-box">
-        <p style="margin-bottom: 12px;">Admin ပေးထားသော Username ရိုက်ထည့်ပါ</p>
-        <input type="text" id="username-input" placeholder="Enter Username..." autocomplete="off">
-        <button class="btn-main" id="login-btn" onclick="loginUser()">Game သို့ ဝင်မည်</button>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="game-section" style="display: none;">
-        <div class="user-tag">Player: <span id="display-username"></span></div>
-        <div class="info-panel">
-            <p>Target Numbers: <span id="target-display" class="highlight">- - -</span></p>
-            <p>Remaining Spins: <span id="spins-left" class="highlight">0</span></p>
-        </div>
-
-        <div class="dice-container">
-            <div class="dice" id="dice1">1</div>
-            <div class="dice" id="dice2">1</div>
-            <div class="dice" id="dice3">1</div>
-        </div>
-
-        <button class="btn-main" id="roll-btn" onclick="rollDice()">Spin Dice</button>
-        <div class="status-msg" id="status-text"></div>
-    </div>
+<html lang="my"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>အန်စာတုံးဂိမ်း</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#111827;color:#f9fafb;text-align:center;padding:20px}
+.card{max-width:380px;margin:auto;background:#1f2937;border-radius:16px;padding:20px}
+input,button{font-size:18px;padding:12px;border-radius:10px;border:0;width:100%;box-sizing:border-box;margin-top:10px}
+button{background:#f59e0b;font-weight:700;cursor:pointer}button:disabled{opacity:.4}
+.row{display:flex;gap:10px;justify-content:center;margin:14px 0}
+.die{width:80px;height:80px;background:#fff;color:#111;border-radius:14px;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.target .die{background:#10b981;color:#fff;width:60px;height:60px;font-size:32px}
+#msg{font-size:22px;font-weight:700;min-height:30px}
+.hide{display:none}
+</style></head><body>
+<div class="card">
+<h2>🎲 အန်စာတုံးဂိမ်း</h2>
+<div id="login">
+<input id="uname" placeholder="Username ထည့်ပါ" autocapitalize="off">
+<button onclick="login()">ဝင်မည်</button>
+<p id="err" style="color:#f87171"></p>
+</div>
+<div id="game" class="hide">
+<div>👤 <b id="me"></b> &nbsp; | &nbsp; Spins: <b id="spins">0</b></div>
+<p>🎯 Target Number</p>
+<div class="row target" id="target"></div>
+<div class="row" id="dice"><div class="die">?</div><div class="die">?</div><div class="die">?</div></div>
+<div id="msg"></div>
+<button id="spinBtn" onclick="spin()">🎲 Spin</button>
+</div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",
-      authDomain: "myleogame.firebaseapp.com",
-      databaseURL: "https://myleogame-default-rtdb.firebaseio.com",
-      projectId: "myleogame",
-      storageBucket: "myleogame.firebasestorage.app",
-      messagingSenderId: "1034042569283",
-      appId: "1:1034042569283:web:65e1273d159121f3bc1af6",
-      measurementId: "G-B1YX9V3E4P"
-    };
+// ▼▼ Firebase Console > Project settings ကနေ ယူထားတဲ့ config ကို ဒီမှာ ထည့်ပါ ▼▼
+const firebaseConfig = {
+  apiKey: "AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",
+  authDomain: "myleogame.firebaseapp.com",
+  databaseURL: "https://myleogame-default-rtdb.firebaseio.com",
+  projectId: "myleogame",
+  storageBucket: "myleogame.firebasestorage.app",
+  messagingSenderId: "1034042569283",
+  appId: "1:1034042569283:web:674f8df8233c5787bc1af6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const authReady = firebase.auth().signInAnonymously();
+let gameOpen = true;
+let name = localStorage.getItem("dg_user"), user = null, target = "", busy = false;
+const $ = id => document.getElementById(id);
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let currentUser = "";
-    let globalTarget = { d1: 1, d2: 2, d3: 3 };
-    let userSpinsLeft = 0;
-    let isRolling = false;
-
-    async function loginUser() {
-        const input = document.getElementById('username-input');
-        const nameInput = input.value.trim().toLowerCase();
-        
-        if(!nameInput) {
-            alert('ကျေးဇူးပြု၍ Username ရိုက်ထည့်ပါ');
-            return;
-        }
-
-        // Admin ထည့်သွင်းထားသော Allowed User လား စစ်ဆေးမည်
-        const allowedSnap = await db.ref('allowedUsers/' + nameInput).once('value');
-        if (!allowedSnap.exists()) {
-            alert('ဤ Username သည် Admin ခွင့်ပြုထားသော စာရင်းတွင် မရှိပါ။');
-            return;
-        }
-
-        currentUser = nameInput;
-        document.getElementById('display-username').innerText = currentUser;
-        document.getElementById('login-section').style.display = 'none';
-        document.getElementById('game-section').style.display = 'block';
-
-        // User Data Initial Load
-        const userRef = db.ref('users/' + currentUser);
-        const snapshot = await userRef.once('value');
-        if (!snapshot.exists()) {
-            await userRef.set({
-                spinsLeft: 0,
-                forcedDice: null,
-                joinedAt: new Date().toLocaleTimeString()
-            });
-        }
-
-        listenToFirebase();
+function login(){
+  const n = $("uname").value.trim().toLowerCase();
+  if(!n) return;
+  authReady.then(()=>db.ref("users/"+n).once("value")).then(s=>{
+    if(!s.exists()){ $("err").textContent="ဒီ Username မရှိပါ။ Admin ပေးထားတဲ့ Username သုံးပါ။"; return; }
+    localStorage.setItem("dg_user", n); name = n; start();
+  });
+}
+function start(){
+  $("login").classList.add("hide"); $("game").classList.remove("hide");
+  $("me").textContent = name;
+  db.ref("config/open").on("value", s=>{ gameOpen = s.val() !== false; refreshBtn(); if(!gameOpen) $("msg").textContent="⏸ ဂိမ်းကို ခေတ္တပိတ်ထားပါတယ်"; else if(!busy && !(user&&user.won)) $("msg").textContent=""; });
+  db.ref("config/target").on("value", s=>{
+    target = s.val() || "";
+    $("target").innerHTML = target ? [...target].map(c=>`<div class="die">${c}</div>`).join("") : "<i>Admin မသတ်မှတ်သေးပါ</i>";
+  });
+  db.ref("users/"+name).on("value", s=>{
+    user = s.val();
+    if(!user){ localStorage.removeItem("dg_user"); location.reload(); return; }
+    $("spins").textContent = user.spins || 0;
+    refreshBtn();
+    if(!busy && user.result) showDice(user.result);
+    if(!busy) $("msg").textContent = user.won ? "🏆 နိုင်ပါပြီ!" : "";
+  });
+}
+function refreshBtn(){ $("spinBtn").disabled = busy || !gameOpen || !user || !(user.spins > 0) || !target; }
+function beep(f,d){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain(); o.frequency.value=f; g.gain.value=.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+d);}catch(e){} }
+function confetti(){ for(let i=0;i<60;i++){ const e=document.createElement("div"); e.textContent=["🎉","✨","🎊","⭐"][i%4]; e.style.cssText=`position:fixed;top:-30px;left:${Math.random()*100}vw;font-size:${18+Math.random()*20}px;transition:transform ${2+Math.random()*2}s linear,opacity 3s;z-index:9`; document.body.appendChild(e); requestAnimationFrame(()=>{e.style.transform=`translateY(${105}vh) rotate(${Math.random()*720}deg)`;e.style.opacity=0}); setTimeout(()=>e.remove(),4500);} }
+function showDice(r){ $("dice").innerHTML = [...r].map(c=>`<div class="die">${c}</div>`).join(""); }
+const rnd = () => Math.floor(Math.random()*6)+1;
+function randomResult(){
+  let r; do { r = ""+rnd()+rnd()+rnd(); } while(r === target); // Admin ခွင့်မပြုရင် မနိုင်
+  return r;
+}
+function spin(){
+  if(busy || !gameOpen || !user || user.spins<=0 || !target) return;
+  busy = true; $("spinBtn").disabled = true; $("msg").textContent = "";
+  const win = !!user.force;
+  const result = win ? target : randomResult();
+  let t = 0;
+  const iv = setInterval(()=>{ showDice(""+rnd()+rnd()+rnd()); beep(300+t*30,.05); if(++t>=15){ clearInterval(iv); finish(result, win); } }, 90);
+}
+function finish(result, win){
+  db.ref("users/"+name).transaction(u=>{
+    if(!u || u.spins<=0) return;
+    u.spins--; u.result = result; u.won = win || u.won || false; if(win) u.force = false;
+    return u;
+  }).then(res=>{
+    busy = false;
+    if(res.committed){
+      showDice(result);
+      if(win){
+        db.ref("winners/"+name).set({name, result, time: Date.now()});
+        $("msg").textContent = "🏆 နိုင်ပါပြီ!"; confetti(); beep(880,.2); setTimeout(()=>beep(1175,.35),200);
+      } else $("msg").textContent = "😅 မတူပါ၊ ထပ်ကြိုးစားပါ";
     }
-
-    function listenToFirebase() {
-        // Admin ပြောင်းလဲသော Target Number ကို Realtime နားထောင်မည်
-        db.ref('globalTarget').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if(data) {
-                globalTarget = data;
-                document.getElementById('target-display').innerText = `${globalTarget.d1} - ${globalTarget.d2} - ${globalTarget.d3}`;
-            }
-        });
-
-        // Admin ပြောင်းလဲသော Spins အကြိမ်ရေကို Realtime နားထောင်မည်
-        db.ref('users/' + currentUser + '/spinsLeft').on('value', (snapshot) => {
-            const val = snapshot.val();
-            userSpinsLeft = (val !== null && val !== undefined) ? val : 0;
-            updateUI();
-        });
-    }
-
-    function updateUI() {
-        document.getElementById('spins-left').innerText = userSpinsLeft;
-        const btn = document.getElementById('roll-btn');
-
-        if (isRolling) return;
-
-        if (userSpinsLeft <= 0) {
-            btn.disabled = true;
-            document.getElementById('status-text').innerText = "Spins ကုန်သွားပါပြီ။ Admin ထံ Spin တောင်းပါ။";
-            document.getElementById('status-text').className = "status-msg lose";
-        } else {
-            btn.disabled = false;
-            document.getElementById('status-text').innerText = "";
-        }
-    }
-
-    async function rollDice() {
-        if (userSpinsLeft <= 0 || isRolling) return;
-
-        isRolling = true;
-        const btn = document.getElementById('roll-btn');
-        btn.disabled = true;
-
-        const dice1 = document.getElementById('dice1');
-        const dice2 = document.getElementById('dice2');
-        const dice3 = document.getElementById('dice3');
-
-        dice1.classList.add('roll-animation');
-        dice2.classList.add('roll-animation');
-        dice3.classList.add('roll-animation');
-
-        const forcedSnap = await db.ref('users/' + currentUser + '/forcedDice').once('value');
-        const forcedDice = forcedSnap.val();
-
-        setTimeout(() => {
-            let res1, res2, res3;
-
-            // Admin မှ အနိုင်/ဂဏန်း သတ်မှတ်ထားလျှင် ထိုဂဏန်း ထွက်မည်
-            if (forcedDice) {
-                res1 = parseInt(forcedDice.d1);
-                res2 = parseInt(forcedDice.d2);
-                res3 = parseInt(forcedDice.d3);
-                db.ref('users/' + currentUser + '/forcedDice').remove();
-            } else {
-                res1 = Math.floor(Math.random() * 6) + 1;
-                res2 = Math.floor(Math.random() * 6) + 1;
-                res3 = Math.floor(Math.random() * 6) + 1;
-            }
-
-            dice1.innerText = res1;
-            dice2.innerText = res2;
-            dice3.innerText = res3;
-
-            dice1.classList.remove('roll-animation');
-            dice2.classList.remove('roll-animation');
-            dice3.classList.remove('roll-animation');
-
-            // Spin 1 ကြိမ် နှုတ်မည်
-            const newSpins = userSpinsLeft - 1;
-            db.ref('users/' + currentUser + '/spinsLeft').set(newSpins < 0 ? 0 : newSpins);
-
-            const isWin = (res1 === globalTarget.d1 && res2 === globalTarget.d2 && res3 === globalTarget.d3);
-            const statusText = document.getElementById('status-text');
-
-            if (isWin) {
-                statusText.innerText = "ဂုဏ်ယူပါတယ်။ ဂဏန်း ၃ လုံးစလုံး ကိုက်ညီသွားပါပြီ။";
-                statusText.className = "status-msg win";
-            } else {
-                statusText.innerText = "ထပ်မံ ကြိုးစားပါ။";
-                statusText.className = "status-msg lose";
-            }
-
-            db.ref('logs').push({
-                username: currentUser,
-                rolled: `${res1} - ${res2} - ${res3}`,
-                status: isWin ? 'WIN' : 'LOSE',
-                time: new Date().toLocaleTimeString()
-            });
-
-            isRolling = false;
-            updateUI();
-
-        }, 600);
-    }
-</script>
-
-</body>
-</html>
+    refreshBtn();
+  }).catch(()=>{ busy=false; refreshBtn(); $("msg").textContent="⚠️ Error၊ ထပ်ကြိုးစားပါ"; });
+}
+if(name) authReady.then(start);
+</script></body></html>
