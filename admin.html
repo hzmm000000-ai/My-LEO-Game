@@ -1,214 +1,102 @@
 <!DOCTYPE html>
-<html lang="my">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Control Panel</title>
-    <!-- Firebase SDK v9 Compact -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #0f172a; color: #fff; padding: 20px; }
-        h1 { color: #38bdf8; margin-bottom: 20px; font-size: 24px; text-align: center; }
-        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h2 { color: #f8b500; margin-bottom: 15px; font-size: 18px; }
-        input[type="number"], input[type="text"] { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; text-align: center; font-size: 16px; }
-        .target-box input { width: 60px; margin-right: 5px; }
-        .btn { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-success { background: #22c55e; color: #fff; }
-        .btn-warning { background: #f59e0b; color: #fff; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { border: 1px solid #334155; padding: 12px; text-align: center; }
-        th { background: #334155; color: #38bdf8; }
-        tr:nth-child(even) { background: #182234; }
+<html lang="my"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#f1f5f9;padding:14px}
+.box{background:#1e293b;border-radius:12px;padding:14px;margin-bottom:14px}
+input,button{font-size:16px;padding:9px;border-radius:8px;border:0;margin:3px 0}
+button{background:#f59e0b;font-weight:700;cursor:pointer}
+.d{background:#ef4444;color:#fff}.g{background:#10b981;color:#fff}
+.t input{width:44px;text-align:center;font-size:24px}
+table{width:100%;border-collapse:collapse}td,th{padding:6px 3px;border-bottom:1px solid #334155;font-size:14px;text-align:left}
+.hide{display:none}
+</style></head><body>
+<div id="lock" class="box"><h3>Admin Login</h3>
+<input id="em" type="email" placeholder="Admin Email"><br><input id="pin" type="password" placeholder="Password"><br><button onclick="unlock()">ဝင်မည်</button><span id="err"></span></div>
 
-        .spin-control-group { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
-        .spin-input { width: 70px !important; padding: 6px !important; font-size: 14px !important; }
-        .action-btn { padding: 6px 10px; font-size: 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
-    </style>
-</head>
-<body>
+<div id="panel" class="hide">
+<div class="box t"><h3>🎯 Target Number (1-6)</h3>
+<input id="t1" maxlength="1"> <input id="t2" maxlength="1"> <input id="t3" maxlength="1">
+<button onclick="setTarget()">သတ်မှတ်မည်</button><div>လက်ရှိ: <b id="cur">-</b></div></div>
 
-<h1>Admin Control Panel</h1>
+<div class="box"><h3>🎮 ဂိမ်းအခြေအနေ</h3><button id="openBtn" onclick="toggleOpen()">-</button>
+<button class="d" onclick="resetAll()">အားလုံး Reset (spins=0, ရလဒ်ရှင်း)</button></div>
 
-<!-- Target Number Control -->
-<div class="card target-box">
-    <h2>🎯 Target Numbers သတ်မှတ်ရန် (မန်ဘာအားလုံးထံ ပေါ်မည်)</h2>
-    <input type="number" id="t1" min="1" max="6" value="1">
-    <input type="number" id="t2" min="1" max="6" value="2">
-    <input type="number" id="t3" min="1" max="6" value="3">
-    <button class="btn" onclick="setGlobalTarget()">Set Target</button>
-    <span id="target-status" style="margin-left: 10px; color: #22c55e;"></span>
+<div class="box"><h3>👥 Username (<span id="cnt">0</span>/30)</h3>
+<input id="nu" placeholder="Username အသစ်"> <input id="ns" type="number" value="3" style="width:60px"> spins
+<button onclick="addUser()">ထည့်မည်</button>
+<button class="g" onclick="allSpins(1)">အားလုံး +1 spin</button>
+<table id="tbl"></table></div>
+
+<div class="box"><h3>🏆 နိုင်သူများ</h3><table id="win"></table>
+<button class="d" onclick="clearWinners()">စာရင်းရှင်းမည်</button></div>
 </div>
 
-<!-- Allowed User Addition (Max 30) -->
-<div class="card">
-    <h2>➕ Allowed Username ထည့်ရန် (အများဆုံး ၃၀ ထိသာ)</h2>
-    <input type="text" id="new-username" placeholder="Username ရိုက်ပါ..." style="width: 200px;">
-    <button class="btn btn-success" onclick="addAllowedUser()">Add User</button>
-    <span style="margin-left: 15px; color: #f8b500;">လက်ရှိ User အရေအတွက်: <b id="user-count">0</b>/30</span>
-</div>
-
-<!-- Members List & Control -->
-<div class="card">
-    <h2>👥 ခွင့်ပြုထားသော User များ၏ Spin / Win ထိန်းချုပ်မှု</h2>
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>လက်ရှိ Spins</th>
-                    <th>Forced Dice Status</th>
-                    <th>Spins / Win ထိန်းချုပ်ရန်</th>
-                    <th>အကောင့်ဖျက်ရန်</th>
-                </tr>
-            </thead>
-            <tbody id="users-table">
-                <tr><td colspan="5">Loading Users List...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",
-      authDomain: "myleogame.firebaseapp.com",
-      databaseURL: "https://myleogame-default-rtdb.firebaseio.com",
-      projectId: "myleogame",
-      storageBucket: "myleogame.firebasestorage.app",
-      messagingSenderId: "1034042569283",
-      appId: "1:1034042569283:web:65e1273d159121f3bc1af6",
-      measurementId: "G-B1YX9V3E4P"
-    };
+// ▼▼ index.html ထဲက config အတိုင်း ထည့်ပါ ▼▼
+const firebaseConfig = {
+  apiKey: "AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",
+  authDomain: "myleogame.firebaseapp.com",
+  databaseURL: "https://myleogame-default-rtdb.firebaseio.com",
+  projectId: "myleogame",
+  storageBucket: "myleogame.firebasestorage.app",
+  messagingSenderId: "1034042569283",
+  appId: "1:1034042569283:web:674f8df8233c5787bc1af6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database(), $ = id => document.getElementById(id);
+let users = {};
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let currentAllowedCount = 0;
-
-    // Target Numbers ပြောင်းရန်
-    function setGlobalTarget() {
-        const v1 = parseInt(document.getElementById('t1').value) || 1;
-        const v2 = parseInt(document.getElementById('t2').value) || 1;
-        const v3 = parseInt(document.getElementById('t3').value) || 1;
-
-        db.ref('globalTarget').set({ d1: v1, d2: v2, d3: v3 }).then(() => {
-            document.getElementById('target-status').innerText = '✅ Target ပြောင်းပြီးပါပြီ!';
-            setTimeout(() => { document.getElementById('target-status').innerText = ''; }, 2000);
-        });
-    }
-
-    db.ref('globalTarget').on('value', (snap) => {
-        const val = snap.val();
-        if (val) {
-            document.getElementById('t1').value = val.d1 || 1;
-            document.getElementById('t2').value = val.d2 || 1;
-            document.getElementById('t3').value = val.d3 || 1;
-        }
-    });
-
-    // Username အသစ် ထည့်ရန် (Max 30 စစ်ဆေးမည်)
-    async function addAllowedUser() {
-        const input = document.getElementById('new-username');
-        const username = input.value.trim().toLowerCase();
-
-        if (!username) {
-            alert('Username ထည့်ပါ။');
-            return;
-        }
-
-        if (currentAllowedCount >= 30) {
-            alert('User ၃၀ အထိ ပြည့်သွားပါပြီ။ ထပ်ထည့်၍ မရတော့ပါ။');
-            return;
-        }
-
-        await db.ref('allowedUsers/' + username).set(true);
-        await db.ref('users/' + username + '/spinsLeft').transaction(s => (s !== null) ? s : 0);
-        
-        input.value = '';
-        alert(username + ' ကို အကောင့်စာရင်းထဲ ထည့်သွင်းပြီးပါပြီ။');
-    }
-
-    // User များ စာရင်းနှင့် Realtime Data နားထောင်မည်
-    db.ref('allowedUsers').on('value', async (snap) => {
-        const allowed = snap.val() || {};
-        const keys = Object.keys(allowed);
-        currentAllowedCount = keys.length;
-        document.getElementById('user-count').innerText = currentAllowedCount;
-
-        const usersSnap = await db.ref('users').once('value');
-        const usersData = usersSnap.val() || {};
-
-        const tbody = document.getElementById('users-table');
-        tbody.innerHTML = '';
-
-        if (keys.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5">ခွင့်ပြုထားသော User မရှိသေးပါ။ အထက်တွင် Username ထည့်ပါ။</td></tr>';
-            return;
-        }
-
-        keys.forEach(username => {
-            const uData = usersData[username] || {};
-            const spins = (uData.spinsLeft !== undefined) ? uData.spinsLeft : 0;
-            const forced = uData.forcedDice ? `${uData.forcedDice.d1}-${uData.forcedDice.d2}-${uData.forcedDice.d3}` : 'None';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><b style="color: #38bdf8; font-size: 16px;">${username}</b></td>
-                <td><b style="color: #f8b500; font-size: 18px;">${spins}</b> ကြိမ်</td>
-                <td><span style="color: ${uData.forcedDice ? '#22c55e' : '#aaa'};">${forced}</span></td>
-                <td>
-                    <div class="spin-control-group">
-                        <button class="action-btn btn-success" onclick="addSpins('${username}', 1)">+1 Spin</button>
-                        <button class="action-btn btn-success" onclick="addSpins('${username}', 5)">+5 Spins</button>
-                        <input type="number" id="spin-input-${username}" class="spin-input" placeholder="အကြိမ်" min="0">
-                        <button class="action-btn btn" onclick="setCustomSpin('${username}')">Set Spin</button>
-                        <button class="action-btn btn-warning" onclick="setForce('${username}')">Force Win</button>
-                    </div>
-                </td>
-                <td>
-                    <button class="action-btn btn-danger" onclick="deleteUser('${username}')">Remove</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    });
-
-    function addSpins(user, count) {
-        db.ref('users/' + user + '/spinsLeft').transaction(s => (s || 0) + count);
-    }
-
-    function setCustomSpin(user) {
-        const input = document.getElementById(`spin-input-${user}`);
-        const val = parseInt(input.value);
-        if (isNaN(val) || val < 0) {
-            alert('ဂဏန်း ရိုက်ထည့်ပါ');
-            return;
-        }
-        db.ref('users/' + user + '/spinsLeft').set(val);
-        input.value = '';
-    }
-
-    // Force Win သတ်မှတ်ရန်
-    function setForce(user) {
-        db.ref('globalTarget').once('value', (snap) => {
-            const target = snap.val() || { d1: 1, d2: 2, d3: 3 };
-            db.ref('users/' + user + '/forcedDice').set(target);
-            alert(user + ' ကို Force Win (နိုင်အောင်) သတ်မှတ်လိုက်ပါပြီ။');
-        });
-    }
-
-    // User ဖျက်ရန်
-    function deleteUser(user) {
-        if (confirm(user + ' ကို ခွင့်ပြုချက် စာရင်းမှ ဖျက်မှာ သေချာပါသလား?')) {
-            db.ref('allowedUsers/' + user).remove();
-            db.ref('users/' + user).remove();
-        }
-    }
-</script>
-
-</body>
-</html>
+function unlock(){
+  firebase.auth().signInWithEmailAndPassword($("em").value.trim(), $("pin").value)
+    .catch(()=>{ $("err").textContent=" Email/Password မှားနေပါတယ်"; });
+}
+firebase.auth().onAuthStateChanged(u=>{
+  if(u && !u.isAnonymous){ $("lock").classList.add("hide"); $("panel").classList.remove("hide"); init(); }
+});
+let isOpen=true;
+function toggleOpen(){ db.ref("config/open").set(!isOpen); }
+function resetAll(){ if(!confirm("Reset လုပ်မလား?")) return; Object.keys(users).forEach(n=>db.ref("users/"+n).update({spins:0,force:false,won:false,result:""})); db.ref("winners").remove(); }
+function init(){
+  db.ref("config/open").on("value", s=>{ isOpen = s.val()!==false; $("openBtn").textContent = isOpen?"🟢 ဖွင့်ထား (နှိပ်ရင်ပိတ်)":"🔴 ပိတ်ထား (နှိပ်ရင်ဖွင့်)"; });
+  db.ref("config/target").on("value", s=> $("cur").textContent = s.val() || "-");
+  db.ref("users").on("value", s=>{ users = s.val() || {}; render(); });
+  db.ref("winners").on("value", s=>{
+    const w = s.val() || {};
+    $("win").innerHTML = "<tr><th>User</th><th>ရလဒ်</th><th>အချိန်</th></tr>" +
+      Object.values(w).sort((a,b)=>b.time-a.time).map(x=>`<tr><td>${x.name}</td><td>${x.result}</td><td>${new Date(x.time).toLocaleString()}</td></tr>`).join("");
+  });
+}
+function setTarget(){
+  const v = $("t1").value+$("t2").value+$("t3").value;
+  if(!/^[1-6]{3}$/.test(v)) return alert("၁ မှ ၆ ကြား ဂဏန်း ၃ လုံး ထည့်ပါ");
+  db.ref("config/target").set(v);
+}
+function addUser(){
+  const n = $("nu").value.trim().toLowerCase();
+  if(!/^[a-z0-9_]+$/.test(n)) return alert("အင်္ဂလိပ်စာလုံး/ဂဏန်းပဲ သုံးပါ");
+  if(users[n]) return alert("ရှိပြီးသား");
+  if(Object.keys(users).length >= 30) return alert("Username 30 ပြည့်ပါပြီ");
+  db.ref("users/"+n).set({spins: +$("ns").value||0, force:false, won:false, result:""});
+  $("nu").value="";
+}
+function render(){
+  const k = Object.keys(users); $("cnt").textContent = k.length;
+  $("tbl").innerHTML = "<tr><th>User</th><th>Spins</th><th>ရလဒ်</th><th>နိုင်စေ</th><th></th></tr>" +
+    k.map(n=>{const u=users[n];return `<tr>
+    <td>${n}${u.won?" 🏆":""}</td>
+    <td><button onclick="addSpin('${n}',-1)">-</button> ${u.spins||0} <button onclick="addSpin('${n}',1)">+</button></td>
+    <td>${u.result||"-"}</td>
+    <td><button class="${u.force?'g':''}" onclick="toggleForce('${n}')">${u.force?'ON':'OFF'}</button></td>
+    <td><button class="d" onclick="del('${n}')">✕</button></td></tr>`}).join("");
+}
+function addSpin(n,d){ db.ref(`users/${n}/spins`).transaction(v=>Math.max(0,(v||0)+d)); }
+function toggleForce(n){ db.ref(`users/${n}/force`).set(!users[n].force); }
+function del(n){ if(confirm(n+" ဖျက်မလား?")){ db.ref("users/"+n).remove(); db.ref("winners/"+n).remove(); } }
+function allSpins(d){ Object.keys(users).forEach(n=>addSpin(n,d)); }
+function clearWinners(){ db.ref("winners").remove(); Object.keys(users).forEach(n=>db.ref(`users/${n}`).update({won:false,force:false})); }
+</script></body></html>
