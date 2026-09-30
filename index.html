@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Member - Dice Game</title>
-    <!-- Updated Firebase SDK Setup -->
+    <!-- Firebase SDK v9 Compact -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -79,8 +79,7 @@
 
     let currentUser = "";
     let globalTarget = [1, 2, 3];
-    let userSpinsLeft = 0;
-    let userForcedDice = null;
+    let userSpinsLeft = 5; // Default 5 Spins
     let isRolling = false;
 
     function loginUser() {
@@ -92,16 +91,25 @@
             return;
         }
 
+        // မန်ဘာတစ်ယောက်စီအတွက် အချင်းချင်း မထပ်အောင် Unique ID ပေးခြင်း
         currentUser = nameInput;
         document.getElementById('display-username').innerText = currentUser;
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('game-section').style.display = 'block';
 
+        // Firebase သို့ အကောင့်သစ် စာရင်းသွင်းမည် (မရှိသေးပါက မူလ ၅ ကြိမ်ပေးမည်)
+        db.ref('users/' + currentUser).transaction((currentData) => {
+            if (currentData === null) {
+                return { spinsLeft: 5, forcedDice: null };
+            }
+            return currentData;
+        });
+
         listenToFirebase();
     }
 
     function listenToFirebase() {
-        // Realtime Global Target Numbers Listener
+        // Global Target ပြောင်းလဲမှုကို နားထောင်မည်
         db.ref('globalTarget').on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
@@ -110,19 +118,11 @@
             }
         });
 
-        // Realtime User Config Listener
-        db.ref('users/' + currentUser).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if(data !== null && data !== undefined) {
-                userSpinsLeft = (data.spinsLeft !== undefined) ? data.spinsLeft : 0;
-                userForcedDice = data.forcedDice || null;
-            } else {
-                // အကောင့်အသစ်များအတွက် အလိုအလျောက် Spin 5 ကြိမ် ပေးမည်
-                userSpinsLeft = 5;
-                db.ref('users/' + currentUser).set({
-                    spinsLeft: 5,
-                    forcedDice: null
-                });
+        // သီးသန့် မိမိ အကောင့်၏ Spins ကိုသာ သီးခြား နားထောင်မည်
+        db.ref('users/' + currentUser + '/spinsLeft').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val !== null && val !== undefined) {
+                userSpinsLeft = val;
             }
             updateUI();
         });
@@ -144,7 +144,7 @@
         }
     }
 
-    function rollDice() {
+    async function rollDice() {
         if (userSpinsLeft <= 0 || isRolling) return;
 
         isRolling = true;
@@ -159,15 +159,19 @@
         dice2.classList.add('roll-animation');
         dice3.classList.add('roll-animation');
 
+        // Forced Dice ရှိမရှိ တစ်ခါတည်း စစ်မည်
+        const forcedSnap = await db.ref('users/' + currentUser + '/forcedDice').once('value');
+        const forcedDice = forcedSnap.val();
+
         setTimeout(() => {
             let res1, res2, res3;
 
-            if (userForcedDice && userForcedDice.length === 3) {
-                res1 = parseInt(userForcedDice[0]);
-                res2 = parseInt(userForcedDice[1]);
-                res3 = parseInt(userForcedDice[2]);
+            if (forcedDice && forcedDice.length === 3) {
+                res1 = parseInt(forcedDice[0]);
+                res2 = parseInt(forcedDice[1]);
+                res3 = parseInt(forcedDice[2]);
                 
-                // Forced Dice ကို ၁ ကြိမ် သုံးပြီးပါက ပြန်ဖျက်မည်
+                // Forced Dice ကို သုံးပြီးပါက ဖျက်မည်
                 db.ref('users/' + currentUser + '/forcedDice').remove();
             } else {
                 res1 = Math.floor(Math.random() * 6) + 1;
@@ -183,9 +187,10 @@
             dice2.classList.remove('roll-animation');
             dice3.classList.remove('roll-animation');
 
-            // Spin Count လျှော့မည်
-            userSpinsLeft -= 1;
-            db.ref('users/' + currentUser + '/spinsLeft').set(userSpinsLeft);
+            // Spin Count ကို Safe ဖြင့် ၁ နှုတ်မည်
+            db.ref('users/' + currentUser + '/spinsLeft').transaction((currentSpins) => {
+                return (currentSpins || 1) - 1;
+            });
 
             // Win Check
             const isWin = (res1 === globalTarget[0] && res2 === globalTarget[1] && res3 === globalTarget[2]);
@@ -199,7 +204,7 @@
                 statusText.className = "status-msg lose";
             }
 
-            // Realtime Log ကို Admin ဆီ ပို့မည်
+            // Realtime Log ပို့မည်
             db.ref('logs').push({
                 username: currentUser,
                 rolled: `${res1} - ${res2} - ${res3}`,
