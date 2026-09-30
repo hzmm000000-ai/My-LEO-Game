@@ -3,112 +3,80 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>အန်စာတုံးဂိမ်း</title>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#111827;color:#f9fafb;text-align:center;padding:20px}
-.card{max-width:380px;margin:auto;background:#1f2937;border-radius:16px;padding:20px}
+body{margin:0;font-family:system-ui,sans-serif;background:#111827;color:#f9fafb;text-align:center;padding:16px}
+.c{max-width:380px;margin:auto;background:#1f2937;border-radius:16px;padding:18px}
 input,button{font-size:18px;padding:12px;border-radius:10px;border:0;width:100%;box-sizing:border-box;margin-top:10px}
-button{background:#f59e0b;font-weight:700;cursor:pointer}button:disabled{opacity:.4}
-.row{display:flex;gap:10px;justify-content:center;margin:14px 0}
-.die{width:80px;height:80px;background:#fff;color:#111;border-radius:14px;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center}
-.target .die{background:#10b981;color:#fff;width:60px;height:60px;font-size:32px}
-#msg{font-size:22px;font-weight:700;min-height:30px}
-.hide{display:none}
+button{background:#f59e0b;font-weight:700}button:disabled{opacity:.4}
+.r{display:flex;gap:10px;justify-content:center;margin:12px 0}
+.d{width:78px;height:78px;background:#fff;color:#111;border-radius:14px;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.t .d{background:#10b981;color:#fff;width:56px;height:56px;font-size:30px}
+.s{font-size:13px;opacity:.7}#er{color:#f87171;min-height:20px}#m{font-size:22px;font-weight:700;min-height:30px}
+.h{display:none}.o{background:#374151;font-size:14px;padding:8px}
 </style></head><body>
-<div class="card">
-<h2>🎲 အန်စာတုံးဂိမ်း</h2>
-<div id="login">
-<input id="uname" placeholder="Username ထည့်ပါ" autocapitalize="off">
-<button onclick="login()">ဝင်မည်</button>
-<p id="err" style="color:#f87171"></p>
-</div>
-<div id="game" class="hide">
-<div>👤 <b id="me"></b> &nbsp; | &nbsp; Spins: <b id="spins">0</b></div>
-<p>🎯 Target Number</p>
-<div class="row target" id="target"></div>
-<div class="row" id="dice"><div class="die">?</div><div class="die">?</div><div class="die">?</div></div>
-<div id="msg"></div>
-<button id="spinBtn" onclick="spin()">🎲 Spin</button>
-</div>
-</div>
-
+<div class="c">
+<h2>🎲 အန်စာတုံးဂိမ်း</h2><div id="st" class="s">ချိတ်ဆက်နေသည်...</div>
+<div id="lg"><input id="un" placeholder="Username ထည့်ပါ" autocapitalize="off" autocomplete="off">
+<button onclick="login()">ဝင်မည်</button></div>
+<div id="gm" class="h">
+<div>👤 <b id="me"></b> | Spins: <b id="sp">0</b></div>
+<p>🎯 Target Number</p><div class="r t" id="tg"></div>
+<div class="r" id="dc"><div class="d">?</div><div class="d">?</div><div class="d">?</div></div>
+<div id="m"></div><button id="sb" onclick="spin()">🎲 Spin</button>
+<button class="o" onclick="logout()">ထွက်မည်</button></div>
+<p id="er"></p></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script>
-// ▼▼ Firebase Console > Project settings ကနေ ယူထားတဲ့ config ကို ဒီမှာ ထည့်ပါ ▼▼
-const firebaseConfig = {
-  apiKey: "AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",
-  authDomain: "myleogame.firebaseapp.com",
-  databaseURL: "https://myleogame-default-rtdb.firebaseio.com",
-  projectId: "myleogame",
-  storageBucket: "myleogame.firebasestorage.app",
-  messagingSenderId: "1034042569283",
-  appId: "1:1034042569283:web:674f8df8233c5787bc1af6"
-};
+const firebaseConfig={apiKey:"AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",authDomain:"myleogame.firebaseapp.com",databaseURL:"https://myleogame-default-rtdb.firebaseio.com",projectId:"myleogame",storageBucket:"myleogame.firebasestorage.app",messagingSenderId:"1034042569283",appId:"1:1034042569283:web:674f8df8233c5787bc1af6"};
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const authReady = firebase.auth().signInAnonymously();
-let gameOpen = true;
-let name = localStorage.getItem("dg_user"), user = null, target = "", busy = false;
-const $ = id => document.getElementById(id);
-
-function login(){
-  const n = $("uname").value.trim().toLowerCase();
-  if(!n) return;
-  authReady.then(()=>db.ref("users/"+n).once("value")).then(s=>{
-    if(!s.exists()){ $("err").textContent="ဒီ Username မရှိပါ။ Admin ပေးထားတဲ့ Username သုံးပါ။"; return; }
-    localStorage.setItem("dg_user", n); name = n; start();
-  });
+const db=firebase.database(),$=i=>document.getElementById(i);
+let name=localStorage.getItem("dg_user")||"",user=null,target="",busy=false,open=true,ready=false,started=false;
+const err=m=>$("er").textContent=m||"";
+db.ref(".info/connected").on("value",s=>$("st").textContent=s.val()?"🟢 Online":"🔴 Offline - Internet စစ်ပါ");
+ready=true;if(name)start();
+async function login(){
+  const n=$("un").value.trim().toLowerCase();if(!n)return;err("စစ်ဆေးနေသည်...");
+  if(!ready)return err("ခဏစောင့်ပြီး ထပ်နှိပ်ပါ");
+  try{const s=await db.ref("users/"+n).once("value");
+    if(!s.exists())return err("ဒီ Username မရှိပါ");
+    name=n;localStorage.setItem("dg_user",n);start();
+  }catch(e){err("Error: "+e.code+" (Rules စစ်ပါ)")}
 }
+function logout(){localStorage.removeItem("dg_user");location.reload()}
 function start(){
-  $("login").classList.add("hide"); $("game").classList.remove("hide");
-  $("me").textContent = name;
-  db.ref("config/open").on("value", s=>{ gameOpen = s.val() !== false; refreshBtn(); if(!gameOpen) $("msg").textContent="⏸ ဂိမ်းကို ခေတ္တပိတ်ထားပါတယ်"; else if(!busy && !(user&&user.won)) $("msg").textContent=""; });
-  db.ref("config/target").on("value", s=>{
-    target = s.val() || "";
-    $("target").innerHTML = target ? [...target].map(c=>`<div class="die">${c}</div>`).join("") : "<i>Admin မသတ်မှတ်သေးပါ</i>";
-  });
-  db.ref("users/"+name).on("value", s=>{
-    user = s.val();
-    if(!user){ localStorage.removeItem("dg_user"); location.reload(); return; }
-    $("spins").textContent = user.spins || 0;
-    refreshBtn();
-    if(!busy && user.result) showDice(user.result);
-    if(!busy) $("msg").textContent = user.won ? "🏆 နိုင်ပါပြီ!" : "";
-  });
+  if(started)return;started=true;err("");
+  $("lg").style.display="none";$("gm").style.display="block";$("me").textContent=name;
+  db.ref("config/target").on("value",s=>{target=s.val()||"";
+    $("tg").innerHTML=target?[...target].map(c=>'<div class="d">'+c+'</div>').join(""):"<i>Admin မသတ်မှတ်သေးပါ</i>";btn()});
+  db.ref("config/open").on("value",s=>{open=s.val()!==false;btn();
+    if(!open)$("m").textContent="⏸ ဂိမ်းကို ခေတ္တပိတ်ထားပါတယ်";else if(!busy)$("m").textContent=user&&user.won?"🏆 နိုင်ပါပြီ!":""});
+  db.ref("users/"+name).on("value",s=>{user=s.val();
+    if(!user){logout();return}
+    $("sp").textContent=user.spins||0;btn();
+    if(!busy){if(user.result)dice(user.result);if(open)$("m").textContent=user.won?"🏆 နိုင်ပါပြီ!":""}
+  },e=>err("Error: "+e.code));
 }
-function refreshBtn(){ $("spinBtn").disabled = busy || !gameOpen || !user || !(user.spins > 0) || !target; }
-function beep(f,d){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain(); o.frequency.value=f; g.gain.value=.15; o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+d);}catch(e){} }
-function confetti(){ for(let i=0;i<60;i++){ const e=document.createElement("div"); e.textContent=["🎉","✨","🎊","⭐"][i%4]; e.style.cssText=`position:fixed;top:-30px;left:${Math.random()*100}vw;font-size:${18+Math.random()*20}px;transition:transform ${2+Math.random()*2}s linear,opacity 3s;z-index:9`; document.body.appendChild(e); requestAnimationFrame(()=>{e.style.transform=`translateY(${105}vh) rotate(${Math.random()*720}deg)`;e.style.opacity=0}); setTimeout(()=>e.remove(),4500);} }
-function showDice(r){ $("dice").innerHTML = [...r].map(c=>`<div class="die">${c}</div>`).join(""); }
-const rnd = () => Math.floor(Math.random()*6)+1;
-function randomResult(){
-  let r; do { r = ""+rnd()+rnd()+rnd(); } while(r === target); // Admin ခွင့်မပြုရင် မနိုင်
-  return r;
-}
+const btn=()=>$("sb").disabled=busy||!open||!user||!(user.spins>0)||!target;
+const dice=r=>$("dc").innerHTML=[...r].map(c=>'<div class="d">'+c+'</div>').join("");
+const rnd=()=>Math.floor(Math.random()*6)+1;
+function beep(f,d){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
+function confetti(){for(let i=0;i<40;i++){const e=document.createElement("div");e.textContent=["🎉","✨","🎊","⭐"][i%4];e.style.cssText="position:fixed;top:-30px;left:"+Math.random()*100+"vw;font-size:24px;transition:transform 3s linear,opacity 3s;z-index:9";document.body.appendChild(e);requestAnimationFrame(()=>{e.style.transform="translateY(105vh)";e.style.opacity=0});setTimeout(()=>e.remove(),3500)}}
 function spin(){
-  if(busy || !gameOpen || !user || user.spins<=0 || !target) return;
-  busy = true; $("spinBtn").disabled = true; $("msg").textContent = "";
-  const win = !!user.force;
-  const result = win ? target : randomResult();
-  let t = 0;
-  const iv = setInterval(()=>{ showDice(""+rnd()+rnd()+rnd()); beep(300+t*30,.05); if(++t>=15){ clearInterval(iv); finish(result, win); } }, 90);
+  if(busy||!open||!user||user.spins<=0||!target)return;
+  busy=true;btn();err("");$("m").textContent="";
+  const win=!!user.force;let res;
+  if(win)res=target;else do{res=""+rnd()+rnd()+rnd()}while(res===target);
+  let t=0;const iv=setInterval(()=>{dice(""+rnd()+rnd()+rnd());beep(300+t*30,.05);if(++t>=15){clearInterval(iv);done(res,win)}},90);
 }
-function finish(result, win){
-  db.ref("users/"+name).transaction(u=>{
-    if(!u || u.spins<=0) return;
-    u.spins--; u.result = result; u.won = win || u.won || false; if(win) u.force = false;
-    return u;
-  }).then(res=>{
-    busy = false;
-    if(res.committed){
-      showDice(result);
-      if(win){
-        db.ref("winners/"+name).set({name, result, time: Date.now()});
-        $("msg").textContent = "🏆 နိုင်ပါပြီ!"; confetti(); beep(880,.2); setTimeout(()=>beep(1175,.35),200);
-      } else $("msg").textContent = "😅 မတူပါ၊ ထပ်ကြိုးစားပါ";
+async function done(res,win){
+  try{
+    const r=await db.ref("users/"+name).transaction(u=>{if(!u||u.spins<=0)return;u.spins--;u.result=res;if(win){u.won=true;u.force=false}return u});
+    busy=false;
+    if(r.committed){dice(res);
+      if(win){await db.ref("winners/"+name).set({name:name,result:res,time:Date.now()});$("m").textContent="🏆 နိုင်ပါပြီ!";confetti();beep(880,.2);setTimeout(()=>beep(1175,.35),200)}
+      else $("m").textContent="😅 မတူပါ၊ ထပ်ကြိုးစားပါ";
     }
-    refreshBtn();
-  }).catch(()=>{ busy=false; refreshBtn(); $("msg").textContent="⚠️ Error၊ ထပ်ကြိုးစားပါ"; });
+  }catch(e){busy=false;err("Error: "+e.code)}
+  btn();
 }
-if(name) authReady.then(start);
 </script></body></html>
