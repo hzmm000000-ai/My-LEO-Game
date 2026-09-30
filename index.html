@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Member - Dice Game</title>
-    <!-- Firebase SDK v9 Compat -->
+    <!-- Firebase SDK v9 Compact -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -37,7 +37,7 @@
 
     <!-- Login Screen -->
     <div id="login-section" class="login-box">
-        <p style="margin-bottom: 12px;">Username ရိုက်ထည့်ပါ</p>
+        <p style="margin-bottom: 12px;">Admin ပေးထားသော Username ရိုက်ထည့်ပါ</p>
         <input type="text" id="username-input" placeholder="Enter Username..." autocomplete="off">
         <button class="btn-main" id="login-btn" onclick="loginUser()">Game သို့ ဝင်မည်</button>
     </div>
@@ -77,7 +77,7 @@
     const db = firebase.database();
 
     let currentUser = "";
-    let globalTarget = [1, 2, 3];
+    let globalTarget = { d1: 1, d2: 2, d3: 3 };
     let userSpinsLeft = 0;
     let isRolling = false;
 
@@ -90,15 +90,21 @@
             return;
         }
 
+        // Admin ထည့်သွင်းထားသော Allowed User လား စစ်ဆေးမည်
+        const allowedSnap = await db.ref('allowedUsers/' + nameInput).once('value');
+        if (!allowedSnap.exists()) {
+            alert('ဤ Username သည် Admin ခွင့်ပြုထားသော စာရင်းတွင် မရှိပါ။');
+            return;
+        }
+
         currentUser = nameInput;
         document.getElementById('display-username').innerText = currentUser;
         document.getElementById('login-section').style.display = 'none';
         document.getElementById('game-section').style.display = 'block';
 
-        // User အသစ်ဝင်လာပါက Free Spin မပေးပါ (spinsLeft = 0 ဖြင့် စတင်မည်)
+        // User Data Initial Load
         const userRef = db.ref('users/' + currentUser);
         const snapshot = await userRef.once('value');
-        
         if (!snapshot.exists()) {
             await userRef.set({
                 spinsLeft: 0,
@@ -111,16 +117,16 @@
     }
 
     function listenToFirebase() {
-        // Target ပြောင်းလဲမှုကို နားထောင်မည်
+        // Admin ပြောင်းလဲသော Target Number ကို Realtime နားထောင်မည်
         db.ref('globalTarget').on('value', (snapshot) => {
             const data = snapshot.val();
             if(data) {
                 globalTarget = data;
-                document.getElementById('target-display').innerText = globalTarget.join(' - ');
+                document.getElementById('target-display').innerText = `${globalTarget.d1} - ${globalTarget.d2} - ${globalTarget.d3}`;
             }
         });
 
-        // မိမိ အကောင့်၏ Spin အကြိမ်ရေ ပြောင်းလဲမှုကို Realtime နားထောင်မည်
+        // Admin ပြောင်းလဲသော Spins အကြိမ်ရေကို Realtime နားထောင်မည်
         db.ref('users/' + currentUser + '/spinsLeft').on('value', (snapshot) => {
             const val = snapshot.val();
             userSpinsLeft = (val !== null && val !== undefined) ? val : 0;
@@ -165,10 +171,11 @@
         setTimeout(() => {
             let res1, res2, res3;
 
-            if (forcedDice && forcedDice.length === 3) {
-                res1 = parseInt(forcedDice[0]);
-                res2 = parseInt(forcedDice[1]);
-                res3 = parseInt(forcedDice[2]);
+            // Admin မှ အနိုင်/ဂဏန်း သတ်မှတ်ထားလျှင် ထိုဂဏန်း ထွက်မည်
+            if (forcedDice) {
+                res1 = parseInt(forcedDice.d1);
+                res2 = parseInt(forcedDice.d2);
+                res3 = parseInt(forcedDice.d3);
                 db.ref('users/' + currentUser + '/forcedDice').remove();
             } else {
                 res1 = Math.floor(Math.random() * 6) + 1;
@@ -188,7 +195,7 @@
             const newSpins = userSpinsLeft - 1;
             db.ref('users/' + currentUser + '/spinsLeft').set(newSpins < 0 ? 0 : newSpins);
 
-            const isWin = (res1 === globalTarget[0] && res2 === globalTarget[1] && res3 === globalTarget[2]);
+            const isWin = (res1 === globalTarget.d1 && res2 === globalTarget.d2 && res3 === globalTarget.d3);
             const statusText = document.getElementById('status-text');
 
             if (isWin) {
