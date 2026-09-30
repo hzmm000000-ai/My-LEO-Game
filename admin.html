@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - User & Spin Management</title>
+    <title>Admin - Control Panel</title>
+    <!-- Firebase SDK v9 Compact -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -12,10 +13,9 @@
         h1 { color: #38bdf8; margin-bottom: 20px; font-size: 24px; text-align: center; }
         .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         h2 { color: #f8b500; margin-bottom: 15px; font-size: 18px; }
-        input[type="number"] { padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; text-align: center; font-size: 16px; }
+        input[type="number"] { padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #fff; text-align: center; font-size: 16px; }
         .target-box input { width: 60px; margin-right: 5px; }
-        .btn { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
+        .btn { background: #38bdf8; color: #0f172a; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-danger { background: #ef4444; color: #fff; }
         .btn-success { background: #22c55e; color: #fff; }
         .btn-warning { background: #f59e0b; color: #fff; }
@@ -25,8 +25,8 @@
         th { background: #334155; color: #38bdf8; }
         tr:nth-child(even) { background: #182234; }
 
-        .spin-control-group { display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap: wrap; }
-        .spin-input { width: 65px !important; padding: 6px !important; font-size: 14px !important; }
+        .spin-control-group { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .spin-input { width: 70px !important; padding: 6px !important; font-size: 14px !important; }
         .action-btn { padding: 6px 10px; font-size: 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -41,6 +41,7 @@
     <input type="number" id="t2" min="1" max="6" value="2">
     <input type="number" id="t3" min="1" max="6" value="3">
     <button class="btn" onclick="setGlobalTarget()">Set Target</button>
+    <span id="target-status" style="margin-left: 10px; color: #22c55e;"></span>
 </div>
 
 <!-- Users List & Control -->
@@ -52,7 +53,7 @@
                 <tr>
                     <th>Username</th>
                     <th>လက်ရှိ Spins</th>
-                    <th>Forced Dice Status</th>
+                    <th>Forced Status</th>
                     <th>Spins ပြင်ဆင်ရန် / ထိန်းချုပ်ရန်</th>
                 </tr>
             </thead>
@@ -78,15 +79,33 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Target ဂဏန်းများ ပြောင်းလဲရန်
     function setGlobalTarget() {
-        const v1 = parseInt(document.getElementById('t1').value);
-        const v2 = parseInt(document.getElementById('t2').value);
-        const v3 = parseInt(document.getElementById('t3').value);
-        db.ref('globalTarget').set([v1, v2, v3]);
-        alert('Global Target ဂဏန်းများ ပြောင်းလဲပြီးပါပြီ!');
+        const v1 = parseInt(document.getElementById('t1').value) || 1;
+        const v2 = parseInt(document.getElementById('t2').value) || 1;
+        const v3 = parseInt(document.getElementById('t3').value) || 1;
+
+        db.ref('globalTarget').set({
+            d1: v1,
+            d2: v2,
+            d3: v3
+        }).then(() => {
+            document.getElementById('target-status').innerText = '✅ Target ပြောင်းပြီးပါပြီ!';
+            setTimeout(() => { document.getElementById('target-status').innerText = ''; }, 2000);
+        });
     }
 
-    // User များ စာရင်းကို Realtime တန်းဖတ်မည်
+    // Current Target ကို ဖတ်ထားပေးမည်
+    db.ref('globalTarget').on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+            document.getElementById('t1').value = val.d1 || 1;
+            document.getElementById('t2').value = val.d2 || 1;
+            document.getElementById('t3').value = val.d3 || 1;
+        }
+    });
+
+    // Users List ကို Realtime ဖတ်မည်
     db.ref('users').on('value', (snapshot) => {
         const users = snapshot.val();
         const tbody = document.getElementById('users-table');
@@ -99,8 +118,8 @@
 
         for (let username in users) {
             const uData = users[username];
-            const spins = uData.spinsLeft !== undefined ? uData.spinsLeft : 0;
-            const forced = uData.forcedDice ? uData.forcedDice.join(' - ') : 'None';
+            const spins = (uData.spinsLeft !== undefined) ? uData.spinsLeft : 0;
+            const forced = uData.forcedDice ? `${uData.forcedDice.d1}-${uData.forcedDice.d2}-${uData.forcedDice.d3}` : 'None';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -112,7 +131,7 @@
                         <button class="action-btn btn-success" onclick="addSpins('${username}', 1)">+1 Spin</button>
                         <button class="action-btn btn-success" onclick="addSpins('${username}', 5)">+5 Spins</button>
                         <input type="number" id="spin-input-${username}" class="spin-input" placeholder="အကြိမ်" min="0">
-                        <button class="action-btn btn" onclick="setCustomSpin('${username}')">Set Spin</button>
+                        <button class="action-btn btn" onclick="setCustomSpin('${username}')">Set</button>
                         <button class="action-btn btn-danger" onclick="setCustomSpinValue('${username}', 0)">Set 0</button>
                         <button class="action-btn btn-warning" onclick="setForce('${username}')">Force Win</button>
                     </div>
@@ -122,17 +141,15 @@
         }
     });
 
-    // Spin တိုးပေးရန်
     function addSpins(user, count) {
         db.ref('users/' + user + '/spinsLeft').transaction(s => (s || 0) + count);
     }
 
-    // Custom Spin ရိုက်ထည့်၍ သတ်မှတ်ရန်
     function setCustomSpin(user) {
         const input = document.getElementById(`spin-input-${user}`);
         const val = parseInt(input.value);
         if (isNaN(val) || val < 0) {
-            alert('ကျေးဇူးပြု၍ မှန်ကန်သော Spin အကြိမ်ရေ ရိုက်ထည့်ပါ');
+            alert('ကျေးဇူးပြု၍ ဂဏန်း ရိုက်ထည့်ပါ');
             return;
         }
         setCustomSpinValue(user, val);
@@ -143,12 +160,11 @@
         db.ref('users/' + user + '/spinsLeft').set(value);
     }
 
-    // Force Win သတ်မှတ်ရန်
     function setForce(user) {
         db.ref('globalTarget').once('value', (snap) => {
-            const target = snap.val() || [1, 2, 3];
+            const target = snap.val() || { d1: 1, d2: 2, d3: 3 };
             db.ref('users/' + user + '/forcedDice').set(target);
-            alert(user + ' အတွက် နောက်တစ်ကြိမ် လှည့်ပါက အနိုင်ရလဒ် ပေါ်အောင် သတ်မှတ်လိုက်ပါပြီ။');
+            alert(user + ' ကို Force Win သတ်မှတ်လိုက်ပါပြီ။');
         });
     }
 </script>
