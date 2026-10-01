@@ -35,7 +35,7 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database(),$=i=>document.getElementById(i);
 let users={},isOpen=true,inited=false;
 const f=e=>alert("❌ "+e.code+"\nFirebase Rules ကို စစ်ပါ");
-const ADMIN_PIN="8888";
+const ADMIN_PIN="2003372";
 function login(){if($("pw").value!==ADMIN_PIN)return $("er").textContent="PIN မှားနေပါတယ်";inited=true;$("lock").style.display="none";$("pn").style.display="block";init()}
 function init(){
   $("lk").textContent=location.href.replace(/admin\.html.*$/,"");
