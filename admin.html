@@ -29,3 +29,47 @@ button,.tg{display:inline-block;width:auto;padding:8px 12px;font-size:14px;margi
 <script>
 const firebaseConfig={apiKey:"AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",authDomain:"myleogame.firebaseapp.com",databaseURL:"https://myleogame-default-rtdb.firebaseio.com",projectId:"myleogame",storageBucket:"myleogame.firebasestorage.app",messagingSenderId:"1034042569283",appId:"1:1034042569283:web:674f8df8233c5787bc1af6"};
 const $=i=>document.getElementById(i);
+function ld(u,cb){let i=0;(function n(){if(i>=u.length)return cb(false);const s=document.createElement("script");s.src=u[i++];s.onload=()=>cb(true);s.onerror=n;document.head.appendChild(s)})()}
+const V="9.23.0",LA=["https://www.gstatic.com/firebasejs/"+V+"/firebase-app-compat.js","https://cdnjs.cloudflare.com/ajax/libs/firebase/"+V+"/firebase-app-compat.min.js","https://cdn.jsdelivr.net/npm/firebase@"+V+"/firebase-app-compat.js"];
+const LD=LA.map(x=>x.replace("app-compat","database-compat"));
+function fail(){$("fb").textContent="❌ Firebase မချိတ်နိုင်ပါ - Internet/VPN စစ်ပါ"}
+function startFirebase(boot){ld(LA,a=>a?ld(LD,b=>b?boot():fail()):fail())}
+function openDB(){try{firebase.database.INTERNAL.forceLongPolling()}catch(e){}firebase.initializeApp(firebaseConfig);return firebase.database()}
+const ADMIN_PIN="2003372";
+let db=null,users={},isOpen=true,inited=false,started=false;
+const f=e=>alert("❌ "+(e.code||e.message));
+startFirebase(()=>{db=openDB();$("fb").textContent="🟢 Firebase ချိတ်ပြီး";if(inited)init()});
+function login(){
+  if($("pw").value.trim()!==ADMIN_PIN)return $("er").textContent="PIN မှားနေပါတယ်";
+  inited=true;$("lock").style.display="none";$("pn").style.display="block";$("lk").textContent=location.href.replace(/admin\.html.*$/,"");
+  if(db)init();
+}
+function init(){
+  if(started)return;started=true;
+  db.ref("config/_t").set(Date.now()).then(()=>$("dbt").textContent="✅ Database ရေး/ဖတ် အဆင်ပြေ").catch(e=>$("dbt").textContent="❌ "+(e.code||e.message)+" → Firebase Rules ကို {\".read\":true,\".write\":true} ပြောင်းပြီး Publish လုပ်ပါ");
+  db.ref("config/target").on("value",s=>$("cur").textContent=s.val()||"-");
+  db.ref("config/open").on("value",s=>{isOpen=s.val()!==false;$("ob").textContent=isOpen?"🟢 ဖွင့်ထား (နှိပ်ရင်ပိတ်)":"🔴 ပိတ်ထား (နှိပ်ရင်ဖွင့်)"});
+  db.ref("users").on("value",s=>{users=s.val()||{};render()},f);
+}
+function ok(){if(!db){alert("Firebase မချိတ်ရသေးပါ");return false}return true}
+function cp(){navigator.clipboard&&navigator.clipboard.writeText($("lk").textContent);alert("Copy ပြီး")}
+function setT(){if(!ok())return;const v=$("t1").value+$("t2").value+$("t3").value;if(!/^[1-6]{3}$/.test(v))return alert("၁ မှ ၆ ကြား ဂဏန်း ၃ လုံး");db.ref("config/target").set(v).then(()=>alert("✅ ပြီး")).catch(f)}
+function tog(){if(ok())db.ref("config/open").set(!isOpen).catch(f)}
+function mk(n,sp){return db.ref("users/"+n).set({spins:sp,force:false,won:false,wins:0,result:""}).catch(f)}
+function add(){if(!ok())return;const n=$("nu").value.trim().toLowerCase();
+  if(!/^[a-z0-9_]+$/.test(n))return alert("a-z 0-9 ပဲသုံးပါ");if(users[n])return alert("ရှိပြီးသား");
+  if(Object.keys(users).length>=30)return alert("၃၀ ပြည့်ပြီ");mk(n,+$("ns").value||0).then(()=>{$("nu").value=""})}
+function bulk(){if(!ok())return;let c=Object.keys(users).length;for(let i=1;i<=30&&c<30;i++){const k="user"+String(i).padStart(2,"0");if(!users[k]){mk(k,+$("ns").value||0);c++}}}
+function render(){const k=Object.keys(users).sort();$("cn").textContent=k.length;
+  $("tb").innerHTML="<tr><th>User</th><th>Spins</th><th>ရလဒ်</th><th>နိုင်စေ</th><th></th></tr>"+k.map(n=>{const u=users[n];
+  return "<tr><td>"+n+(u.wins?" 🏆"+u.wins:"")+"</td><td><button onclick=\"sp('"+n+"',-1)\">-</button>"+(u.spins||0)+"<button onclick=\"sp('"+n+"',1)\">+</button></td><td>"+(u.result||"-")+"</td><td><button class=\""+(u.force?"g":"o")+"\" onclick=\"fc('"+n+"')\">"+(u.force?"ON":"OFF")+"</button></td><td><button class=\"d2\" onclick=\"dl('"+n+"')\">✕</button></td></tr>"}).join("");
+  const w=k.filter(n=>users[n].wins>0).sort((a,b)=>users[b].wins-users[a].wins);
+  $("wt").textContent="("+w.length+" ဦး / "+w.reduce((s,n)=>s+users[n].wins,0)+" ကြိမ်)";
+  $("wn").innerHTML="<tr><th>User</th><th>နိုင်ကြိမ်</th><th>နောက်ဆုံး</th></tr>"+(w.length?w.map(n=>"<tr><td>"+n+"</td><td>?? ×"+users[n].wins+"</td><td>"+(users[n].lastWin?new Date(users[n].lastWin).toLocaleString():"-")+"</td></tr>").join(""):"<tr><td colspan=3 style='opacity:.6'>မရှိသေးပါ</td></tr>")}
+function sp(n,d){db.ref("users/"+n+"/spins").transaction(v=>Math.max(0,(v||0)+d)).catch(f)}
+function fc(n){db.ref("users/"+n+"/force").set(!users[n].force).catch(f)}
+function dl(n){if(confirm(n+" ဖျက်မလား?"))db.ref("users/"+n).remove().catch(f)}
+function allS(d){Object.keys(users).forEach(n=>sp(n,d))}
+function cw(){if(confirm("နိုင်စာရင်း ရှင်းမလား?"))Object.keys(users).forEach(n=>db.ref("users/"+n).update({wins:0,won:false,force:false,lastWin:null}))}
+function rst(){if(confirm("Reset လုပ်မလား?"))Object.keys(users).forEach(n=>mk(n,0))}
+</script></body></html>
