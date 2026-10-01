@@ -1,15 +1,11 @@
-<!DOCTYPE html>
-<html lang="my"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LEO Dice</title>
-<style>
+<!DOCTYPE html><html lang="my"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LEO Dice</title><style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;color:#f4f1ea;padding:16px;background:radial-gradient(circle at 20% 0,#2a1a4a 0,#0b0f1a 55%) fixed}
 .w{max-width:420px;margin:auto}.logo{text-align:center;font-size:26px;letter-spacing:4px;font-weight:800;color:#f5c451;text-shadow:0 0 18px rgba(245,196,81,.45)}
-.card{background:rgba(255,255,255,.06);border:1px solid rgba(245,196,81,.28);border-radius:20px;padding:18px;margin-top:14px;box-shadow:0 10px 40px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(245,196,81,.28);border-radius:20px;padding:18px;margin-top:14px;box-shadow:0 10px 40px rgba(0,0,0,.45)}
 input{width:100%;font-size:17px;padding:13px;border-radius:12px;border:1px solid rgba(245,196,81,.3);background:rgba(0,0,0,.35);color:#fff;margin-top:10px;outline:0}
 button,.tg{display:block;width:100%;font-size:17px;padding:13px;border-radius:12px;border:0;margin-top:10px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;color:#2a1b00;background:linear-gradient(135deg,#fde08a,#f5c451 50%,#c98e1b);box-shadow:0 4px 18px rgba(245,196,81,.3)}
-button:disabled{opacity:.35}.o{background:rgba(255,255,255,.08);color:#ddd;box-shadow:none;font-size:14px;padding:10px;font-weight:600}.tg{background:linear-gradient(135deg,#38b6ff,#1e88e5);color:#fff;box-shadow:0 4px 18px rgba(30,136,229,.35)}
-.hide{display:none}.s{text-align:center;font-size:12px;opacity:.75;margin-top:4px}.s i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.on{background:#34d399}.off{background:#f87171}
+button:disabled{opacity:.35}.o{background:rgba(255,255,255,.1);color:#ddd;box-shadow:none;font-size:14px;padding:10px;font-weight:600}.tg{background:linear-gradient(135deg,#38b6ff,#1e88e5);color:#fff;box-shadow:0 4px 18px rgba(30,136,229,.35)}
+.hide{display:none}.s{text-align:center;font-size:12px;opacity:.8;margin-top:4px}.s i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.on{background:#34d399}.off{background:#f87171}
 #er{color:#f87171;text-align:center;min-height:20px;font-size:14px}
 .chips{display:flex;gap:8px}.chip{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(245,196,81,.2);border-radius:14px;padding:8px 4px;text-align:center}
 .chip small{display:block;font-size:10px;letter-spacing:1px;opacity:.65}.chip b{font-size:20px;color:#f5c451;word-break:break-all}
@@ -19,13 +15,17 @@ button:disabled{opacity:.35}.o{background:rgba(255,255,255,.08);color:#ddd;box-s
 .t .d{width:54px;height:54px;font-size:30px;border-radius:14px;background:linear-gradient(145deg,#fde08a,#c98e1b);color:#2a1b00}
 .rolling .d{animation:sh .18s infinite}@keyframes sh{50%{transform:rotate(8deg) scale(1.05)}}
 #m{text-align:center;font-size:21px;font-weight:800;min-height:30px;color:#f5c451}
-</style></head><body><div class="w">
-<div class="logo">🎲 LEO DICE</div><div id="st" class="s"></div>
+</style></head><body>
+<div class="w">
+<div class="logo">🎲 LEO DICE</div><div id="st" class="s"><span id="fb">Firebase ချိတ်နေသည်...</span></div>
 <div id="lg" class="card"><div style="text-align:center;opacity:.8">Admin ပေးထားတဲ့ Username ဖြင့် ဝင်ပါ</div>
-<input id="un" placeholder="Username" autocapitalize="off" autocomplete="off"><button onclick="login()">ဝင်မည်</button>
+<input id="un" placeholder="Username" autocapitalize="off" autocomplete="off" onkeydown="if(event.key==='Enter')login()"><button onclick="login()">ဝင်မည်</button>
 <a class="tg" href="https://t.me/LEO_Z1" target="_blank">✈️ Admin သို့ ဆက်သွယ်ရန်</a></div>
 <div id="gm" class="card hide">
 <div class="chips"><div class="chip"><small>USER</small><b id="me" style="font-size:15px"></b></div><div class="chip"><small>SPINS</small><b id="sp">0</b></div><div class="chip"><small>🏆 နိုင်ကြိမ်</small><b id="wn">0</b></div></div>
 <div class="lbl">🎯 TARGET NUMBER</div><div class="r t" id="tg"></div>
 <div class="r" id="dc"><div class="d">?</div><div class="d">?</div><div class="d">?</div></div>
 <div id="m"></div><button id="sb" onclick="spin()">🎲 SPIN</button>
+<a class="tg" href="https://t.me/LEO_Z1" target="_blank">✈️ Admin သို့ ဆက်သွယ်ရန်</a>
+<button class="o" onclick="logout()">ထွက်မည်</button></div>
+<p id="er"></p></div>
