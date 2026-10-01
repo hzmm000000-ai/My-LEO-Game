@@ -1,82 +1,31 @@
 <!DOCTYPE html>
 <html lang="my"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>အန်စာတုံးဂိမ်း</title>
+<title>LEO Dice</title>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#111827;color:#f9fafb;text-align:center;padding:16px}
-.c{max-width:380px;margin:auto;background:#1f2937;border-radius:16px;padding:18px}
-input,button{font-size:18px;padding:12px;border-radius:10px;border:0;width:100%;box-sizing:border-box;margin-top:10px}
-button{background:#f59e0b;font-weight:700}button:disabled{opacity:.4}
-.r{display:flex;gap:10px;justify-content:center;margin:12px 0}
-.d{width:78px;height:78px;background:#fff;color:#111;border-radius:14px;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center}
-.t .d{background:#10b981;color:#fff;width:56px;height:56px;font-size:30px}
-.s{font-size:13px;opacity:.7}#er{color:#f87171;min-height:20px}#m{font-size:22px;font-weight:700;min-height:30px}
-.h{display:none}.o{background:#374151;font-size:14px;padding:8px}
-</style></head><body>
-<div class="c">
-<h2>🎲 အန်စာတုံးဂိမ်း</h2><div id="st" class="s">ချိတ်ဆက်နေသည်...</div>
-<div id="lg"><input id="un" placeholder="Username ထည့်ပါ" autocapitalize="off" autocomplete="off">
-<button onclick="login()">ဝင်မည်</button></div>
-<div id="gm" class="h">
-<div>👤 <b id="me"></b> | Spins: <b id="sp">0</b></div>
-<p>🎯 Target Number</p><div class="r t" id="tg"></div>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;color:#f4f1ea;padding:16px;background:radial-gradient(circle at 20% 0,#2a1a4a 0,#0b0f1a 55%) fixed}
+.w{max-width:420px;margin:auto}.logo{text-align:center;font-size:26px;letter-spacing:4px;font-weight:800;color:#f5c451;text-shadow:0 0 18px rgba(245,196,81,.45)}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(245,196,81,.28);border-radius:20px;padding:18px;margin-top:14px;box-shadow:0 10px 40px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+input{width:100%;font-size:17px;padding:13px;border-radius:12px;border:1px solid rgba(245,196,81,.3);background:rgba(0,0,0,.35);color:#fff;margin-top:10px;outline:0}
+button,.tg{display:block;width:100%;font-size:17px;padding:13px;border-radius:12px;border:0;margin-top:10px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;color:#2a1b00;background:linear-gradient(135deg,#fde08a,#f5c451 50%,#c98e1b);box-shadow:0 4px 18px rgba(245,196,81,.3)}
+button:disabled{opacity:.35}.o{background:rgba(255,255,255,.08);color:#ddd;box-shadow:none;font-size:14px;padding:10px;font-weight:600}.tg{background:linear-gradient(135deg,#38b6ff,#1e88e5);color:#fff;box-shadow:0 4px 18px rgba(30,136,229,.35)}
+.hide{display:none}.s{text-align:center;font-size:12px;opacity:.75;margin-top:4px}.s i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.on{background:#34d399}.off{background:#f87171}
+#er{color:#f87171;text-align:center;min-height:20px;font-size:14px}
+.chips{display:flex;gap:8px}.chip{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(245,196,81,.2);border-radius:14px;padding:8px 4px;text-align:center}
+.chip small{display:block;font-size:10px;letter-spacing:1px;opacity:.65}.chip b{font-size:20px;color:#f5c451;word-break:break-all}
+.lbl{text-align:center;font-size:12px;letter-spacing:3px;opacity:.7;margin-top:16px}
+.r{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.d{width:78px;height:78px;background:linear-gradient(145deg,#fff,#d9d4c7);color:#1a1030;border-radius:18px;font-size:46px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.5),inset 0 -4px 8px rgba(0,0,0,.12)}
+.t .d{width:54px;height:54px;font-size:30px;border-radius:14px;background:linear-gradient(145deg,#fde08a,#c98e1b);color:#2a1b00}
+.rolling .d{animation:sh .18s infinite}@keyframes sh{50%{transform:rotate(8deg) scale(1.05)}}
+#m{text-align:center;font-size:21px;font-weight:800;min-height:30px;color:#f5c451}
+</style></head><body><div class="w">
+<div class="logo">🎲 LEO DICE</div><div id="st" class="s"></div>
+<div id="lg" class="card"><div style="text-align:center;opacity:.8">Admin ပေးထားတဲ့ Username ဖြင့် ဝင်ပါ</div>
+<input id="un" placeholder="Username" autocapitalize="off" autocomplete="off"><button onclick="login()">ဝင်မည်</button>
+<a class="tg" href="https://t.me/LEO_Z1" target="_blank">✈️ Admin သို့ ဆက်သွယ်ရန်</a></div>
+<div id="gm" class="card hide">
+<div class="chips"><div class="chip"><small>USER</small><b id="me" style="font-size:15px"></b></div><div class="chip"><small>SPINS</small><b id="sp">0</b></div><div class="chip"><small>🏆 နိုင်ကြိမ်</small><b id="wn">0</b></div></div>
+<div class="lbl">🎯 TARGET NUMBER</div><div class="r t" id="tg"></div>
 <div class="r" id="dc"><div class="d">?</div><div class="d">?</div><div class="d">?</div></div>
-<div id="m"></div><button id="sb" onclick="spin()">🎲 Spin</button>
-<button class="o" onclick="logout()">ထွက်မည်</button></div>
-<p id="er"></p></div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig={apiKey:"AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",authDomain:"myleogame.firebaseapp.com",databaseURL:"https://myleogame-default-rtdb.firebaseio.com",projectId:"myleogame",storageBucket:"myleogame.firebasestorage.app",messagingSenderId:"1034042569283",appId:"1:1034042569283:web:674f8df8233c5787bc1af6"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database(),$=i=>document.getElementById(i);
-let name=localStorage.getItem("dg_user")||"",user=null,target="",busy=false,open=true,ready=false,started=false;
-const err=m=>$("er").textContent=m||"";
-db.ref(".info/connected").on("value",s=>$("st").textContent=s.val()?"🟢 Online":"🔴 Offline - Internet စစ်ပါ");
-ready=true;if(name)start();
-async function login(){
-  const n=$("un").value.trim().toLowerCase();if(!n)return;err("စစ်ဆေးနေသည်...");
-  if(!ready)return err("ခဏစောင့်ပြီး ထပ်နှိပ်ပါ");
-  try{const s=await db.ref("users/"+n).once("value");
-    if(!s.exists())return err("ဒီ Username မရှိပါ");
-    name=n;localStorage.setItem("dg_user",n);start();
-  }catch(e){err("Error: "+e.code+" (Rules စစ်ပါ)")}
-}
-function logout(){localStorage.removeItem("dg_user");location.reload()}
-function start(){
-  if(started)return;started=true;err("");
-  $("lg").style.display="none";$("gm").style.display="block";$("me").textContent=name;
-  db.ref("config/target").on("value",s=>{target=s.val()||"";
-    $("tg").innerHTML=target?[...target].map(c=>'<div class="d">'+c+'</div>').join(""):"<i>Admin မသတ်မှတ်သေးပါ</i>";btn()});
-  db.ref("config/open").on("value",s=>{open=s.val()!==false;btn();
-    if(!open)$("m").textContent="⏸ ဂိမ်းကို ခေတ္တပိတ်ထားပါတယ်";else if(!busy)$("m").textContent=user&&user.won?"🏆 နိုင်ပါပြီ!":""});
-  db.ref("users/"+name).on("value",s=>{user=s.val();
-    if(!user){logout();return}
-    $("sp").textContent=user.spins||0;btn();
-    if(!busy){if(user.result)dice(user.result);if(open)$("m").textContent=user.won?"🏆 နိုင်ပါပြီ!":""}
-  },e=>err("Error: "+e.code));
-}
-const btn=()=>$("sb").disabled=busy||!open||!user||!(user.spins>0)||!target;
-const dice=r=>$("dc").innerHTML=[...r].map(c=>'<div class="d">'+c+'</div>').join("");
-const rnd=()=>Math.floor(Math.random()*6)+1;
-function beep(f,d){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
-function confetti(){for(let i=0;i<40;i++){const e=document.createElement("div");e.textContent=["🎉","✨","🎊","⭐"][i%4];e.style.cssText="position:fixed;top:-30px;left:"+Math.random()*100+"vw;font-size:24px;transition:transform 3s linear,opacity 3s;z-index:9";document.body.appendChild(e);requestAnimationFrame(()=>{e.style.transform="translateY(105vh)";e.style.opacity=0});setTimeout(()=>e.remove(),3500)}}
-function spin(){
-  if(busy||!open||!user||user.spins<=0||!target)return;
-  busy=true;btn();err("");$("m").textContent="";
-  const win=!!user.force;let res;
-  if(win)res=target;else do{res=""+rnd()+rnd()+rnd()}while(res===target);
-  let t=0;const iv=setInterval(()=>{dice(""+rnd()+rnd()+rnd());beep(300+t*30,.05);if(++t>=15){clearInterval(iv);done(res,win)}},90);
-}
-async function done(res,win){
-  try{
-    const r=await db.ref("users/"+name).transaction(u=>{if(!u||u.spins<=0)return;u.spins--;u.result=res;if(win){u.won=true;u.force=false}return u});
-    busy=false;
-    if(r.committed){dice(res);
-      if(win){await db.ref("winners/"+name).set({name:name,result:res,time:Date.now()});$("m").textContent="🏆 နိုင်ပါပြီ!";confetti();beep(880,.2);setTimeout(()=>beep(1175,.35),200)}
-      else $("m").textContent="😅 မတူပါ၊ ထပ်ကြိုးစားပါ";
-    }
-  }catch(e){busy=false;err("Error: "+e.code)}
-  btn();
-}
-</script></body></html>
+<div id="m"></div><button id="sb" onclick="spin()">🎲 SPIN</button>
