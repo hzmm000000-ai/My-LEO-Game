@@ -1,65 +1,31 @@
 <!DOCTYPE html>
 <html lang="my"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin</title>
+<title>LEO Admin</title>
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#0f172a;color:#f1f5f9;padding:12px}
-.b{background:#1e293b;border-radius:12px;padding:12px;margin-bottom:12px}
-input,button{font-size:16px;padding:9px;border-radius:8px;border:0;margin:3px 0}
-button{background:#f59e0b;font-weight:700}.d{background:#ef4444;color:#fff}.g{background:#10b981;color:#fff}
-.t input{width:44px;text-align:center;font-size:24px}
-table{width:100%;border-collapse:collapse}td,th{padding:5px 2px;border-bottom:1px solid #334155;font-size:14px;text-align:left}
-.h{display:none}h3{margin:0 0 6px}#lk{word-break:break-all;color:#38bdf8;font-size:14px}
-</style></head><body>
-<div id="lock" class="b"><h3>Admin Login</h3>
-<input id="pw" type="password" placeholder="Admin PIN"><br>
-<button onclick="login()">ဝင်မည်</button> <span id="er" style="color:#f87171"></span></div>
-<div id="pn" class="h">
-<div class="b"><h3>🔗 Player Link (Member တွေကို ပေးရန်)</h3><div id="lk"></div><button onclick="cp()">Copy</button></div>
-<div class="b t"><h3>🎯 Target (1-6)</h3><input id="t1" maxlength="1" inputmode="numeric"> <input id="t2" maxlength="1" inputmode="numeric"> <input id="t3" maxlength="1" inputmode="numeric">
-<button onclick="setT()">သတ်မှတ်မည်</button><div>လက်ရှိ: <b id="cur">-</b></div></div>
-<div class="b"><h3>🎮 ဂိမ်း</h3><button id="ob" onclick="tog()">-</button> <button class="d" onclick="rst()">Reset အားလုံး</button></div>
-<div class="b"><h3>👥 Username (<span id="cn">0</span>/30)</h3>
-<input id="nu" placeholder="username (a-z,0-9)" style="width:42%"> <input id="ns" type="number" value="3" style="width:56px"> spins
-<button onclick="add()">ထည့်</button><br>
-<button class="g" onclick="bulk()">user01-user30 တစ်ခါတည်းဆောက်</button>
-<button class="g" onclick="allS(1)">အားလုံး +1 spin</button>
-<table id="tb"></table></div>
-<div class="b"><h3>🏆 နိုင်သူများ</h3><table id="wn"></table><button class="d" onclick="cw()">စာရင်းရှင်း</button></div>
-</div>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-const firebaseConfig={apiKey:"AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",authDomain:"myleogame.firebaseapp.com",databaseURL:"https://myleogame-default-rtdb.firebaseio.com",projectId:"myleogame",storageBucket:"myleogame.firebasestorage.app",messagingSenderId:"1034042569283",appId:"1:1034042569283:web:674f8df8233c5787bc1af6"};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database(),$=i=>document.getElementById(i);
-let users={},isOpen=true,inited=false;
-const f=e=>alert("❌ "+e.code+"\nFirebase Rules ကို စစ်ပါ");
-const ADMIN_PIN="2003372";
-function login(){if($("pw").value!==ADMIN_PIN)return $("er").textContent="PIN မှားနေပါတယ်";inited=true;$("lock").style.display="none";$("pn").style.display="block";init()}
-function init(){
-  $("lk").textContent=location.href.replace(/admin\.html.*$/,"");
-  db.ref("config/target").on("value",s=>$("cur").textContent=s.val()||"-");
-  db.ref("config/open").on("value",s=>{isOpen=s.val()!==false;$("ob").textContent=isOpen?"🟢 ဖွင့်ထား (နှိပ်ရင်ပိတ်)":"🔴 ပိတ်ထား (နှိပ်ရင်ဖွင့်)"});
-  db.ref("users").on("value",s=>{users=s.val()||{};render()},e=>alert("Error: "+e.code+" (Rules ထဲ Admin email စစ်ပါ)"));
-  db.ref("winners").on("value",s=>{const w=Object.values(s.val()||{}).sort((a,b)=>b.time-a.time);
-    $("wn").innerHTML="<tr><th>User</th><th>ရလဒ်</th><th>အချိန်</th></tr>"+w.map(x=>"<tr><td>"+x.name+"</td><td>"+x.result+"</td><td>"+new Date(x.time).toLocaleTimeString()+"</td></tr>").join("")});
-}
-function cp(){navigator.clipboard&&navigator.clipboard.writeText($("lk").textContent);alert("Copy ပြီး")}
-function setT(){const v=$("t1").value+$("t2").value+$("t3").value;if(!/^[1-6]{3}$/.test(v))return alert("၁ မှ ၆ ကြား ဂဏန်း ၃ လုံး");db.ref("config/target").set(v).then(()=>alert("✅ Target သတ်မှတ်ပြီး")).catch(f)}
-function tog(){db.ref("config/open").set(!isOpen).catch(f)}
-function mk(n,sp){return db.ref("users/"+n).set({spins:sp,force:false,won:false,result:""}).catch(f)}
-function add(){const n=$("nu").value.trim().toLowerCase();
-  if(!/^[a-z0-9_]+$/.test(n))return alert("a-z 0-9 ပဲသုံးပါ");if(users[n])return alert("ရှိပြီးသား");
-  if(Object.keys(users).length>=30)return alert("၃၀ ပြည့်ပြီ");mk(n,+$("ns").value||0).then(()=>{$("nu").value="";alert("✅ "+n+" ထည့်ပြီး")})}
-function bulk(){let c=Object.keys(users).length;for(let i=1;i<=30&&c<30;i++){const k="user"+String(i).padStart(2,"0");if(!users[k]){mk(k,+$("ns").value||0);c++}}}
-function render(){const k=Object.keys(users).sort();$("cn").textContent=k.length;
-  $("tb").innerHTML="<tr><th>User</th><th>Spins</th><th>ရလဒ်</th><th>နိုင်စေ</th><th></th></tr>"+k.map(n=>{const u=users[n];
-  return "<tr><td>"+n+(u.won?" 🏆":"")+"</td><td><button onclick=\"sp('"+n+"',-1)\">-</button> "+(u.spins||0)+" <button onclick=\"sp('"+n+"',1)\">+</button></td><td>"+(u.result||"-")+"</td><td><button class=\""+(u.force?"g":"")+"\" onclick=\"fc('"+n+"')\">"+(u.force?"ON":"OFF")+"</button></td><td><button class=\"d\" onclick=\"dl('"+n+"')\">✕</button></td></tr>"}).join("")}
-function sp(n,d){db.ref("users/"+n+"/spins").transaction(v=>Math.max(0,(v||0)+d)).catch(f)}
-function fc(n){db.ref("users/"+n+"/force").set(!users[n].force).catch(f)}
-function dl(n){if(confirm(n+" ဖျက်မလား?")){db.ref("users/"+n).remove();db.ref("winners/"+n).remove()}}
-function allS(d){Object.keys(users).forEach(n=>sp(n,d))}
-function cw(){db.ref("winners").remove();Object.keys(users).forEach(n=>db.ref("users/"+n).update({won:false,force:false}))}
-function rst(){if(!confirm("Reset လုပ်မလား?"))return;Object.keys(users).forEach(n=>mk(n,0));db.ref("winners").remove()}
-</script></body></html>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,sans-serif;color:#f4f1ea;padding:16px;background:radial-gradient(circle at 20% 0,#2a1a4a 0,#0b0f1a 55%) fixed}
+.w{max-width:420px;margin:auto}.logo{text-align:center;font-size:26px;letter-spacing:4px;font-weight:800;color:#f5c451;text-shadow:0 0 18px rgba(245,196,81,.45)}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(245,196,81,.28);border-radius:20px;padding:18px;margin-top:14px;box-shadow:0 10px 40px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+input{width:100%;font-size:17px;padding:13px;border-radius:12px;border:1px solid rgba(245,196,81,.3);background:rgba(0,0,0,.35);color:#fff;margin-top:10px;outline:0}
+button,.tg{display:block;width:100%;font-size:17px;padding:13px;border-radius:12px;border:0;margin-top:10px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;color:#2a1b00;background:linear-gradient(135deg,#fde08a,#f5c451 50%,#c98e1b);box-shadow:0 4px 18px rgba(245,196,81,.3)}
+button:disabled{opacity:.35}.o{background:rgba(255,255,255,.08);color:#ddd;box-shadow:none;font-size:14px;padding:10px;font-weight:600}.tg{background:linear-gradient(135deg,#38b6ff,#1e88e5);color:#fff;box-shadow:0 4px 18px rgba(30,136,229,.35)}
+.hide{display:none}.s{text-align:center;font-size:12px;opacity:.75;margin-top:4px}.s i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.on{background:#34d399}.off{background:#f87171}
+#er{color:#f87171;text-align:center;min-height:20px;font-size:14px}
+.w{max-width:560px}h3{margin:0 0 8px;color:#f5c451;font-size:16px;letter-spacing:1px}
+button,.tg{display:inline-block;width:auto;padding:8px 12px;font-size:14px;margin:3px 2px}input{width:auto;padding:9px;font-size:15px;margin:3px 2px}
+.d2{background:linear-gradient(135deg,#f87171,#dc2626);color:#fff;box-shadow:none}.g{background:linear-gradient(135deg,#6ee7b7,#10b981);color:#053}
+.t input{width:46px;text-align:center;font-size:24px}table{width:100%;border-collapse:collapse}td,th{padding:6px 2px;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px;text-align:left}th{color:#f5c451;font-weight:600}
+#lk{word-break:break-all;color:#7dd3fc;font-size:13px}.big{font-size:22px;color:#f5c451;font-weight:800}
+</style></head><body><div class="w">
+<div class="logo">👑 LEO ADMIN</div>
+<div id="lock" class="card"><h3>Admin Login</h3><input id="pw" type="password" placeholder="Admin PIN" style="width:100%"><button onclick="login()">ဝင်မည်</button><span id="er" style="color:#f87171"></span></div>
+<div id="pn" class="hide">
+<div class="card"><h3>🔗 Player Link</h3><div id="lk"></div><button onclick="cp()">Copy</button></div>
+<div class="card t"><h3>🎯 Target (1-6)</h3><input id="t1" maxlength="1" inputmode="numeric"><input id="t2" maxlength="1" inputmode="numeric"><input id="t3" maxlength="1" inputmode="numeric">
+<button onclick="setT()">သတ်မှတ်မည်</button><div>လက်ရှိ: <span class="big" id="cur">-</span></div></div>
+<div class="card"><h3>🎮 ဂိမ်း</h3><button id="ob" onclick="tog()">-</button><button class="d2" onclick="rst()">Reset အားလုံး</button></div>
+<div class="card"><h3>🏆 နိုင်သူအားလုံး <span id="wt" style="font-size:13px;color:#ddd"></span></h3><table id="wn"></table><button class="d2" onclick="cw()">နိုင်စာရင်း ရှင်းမည်</button></div>
+<div class="card"><h3>👥 Username (<span id="cn">0</span>/30)</h3>
+<input id="nu" placeholder="username" style="width:38%"><input id="ns" type="number" value="3" style="width:56px"> spins<button onclick="add()">ထည့်</button><br>
+<button class="g" onclick="bulk()">user01-30 ဆောက်</button><button class="g" onclick="allS(1)">အားလုံး +1 spin</button>
+<table id="tb"></table></div></div></div>
