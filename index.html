@@ -29,3 +29,66 @@ button:disabled{opacity:.35}.o{background:rgba(255,255,255,.1);color:#ddd;box-sh
 <a class="tg" href="https://t.me/LEO_Z1" target="_blank">✈️ Admin သို့ ဆက်သွယ်ရန်</a>
 <button class="o" onclick="logout()">ထွက်မည်</button></div>
 <p id="er"></p></div>
+<script>
+const firebaseConfig={apiKey:"AIzaSyCzhr0A8wwApcybklGOodu6LLp-DXSqg68",authDomain:"myleogame.firebaseapp.com",databaseURL:"https://myleogame-default-rtdb.firebaseio.com",projectId:"myleogame",storageBucket:"myleogame.firebasestorage.app",messagingSenderId:"1034042569283",appId:"1:1034042569283:web:674f8df8233c5787bc1af6"};
+const $=i=>document.getElementById(i);
+function ld(u,cb){let i=0;(function n(){if(i>=u.length)return cb(false);const s=document.createElement("script");s.src=u[i++];s.onload=()=>cb(true);s.onerror=n;document.head.appendChild(s)})()}
+const V="9.23.0",LA=["https://www.gstatic.com/firebasejs/"+V+"/firebase-app-compat.js","https://cdnjs.cloudflare.com/ajax/libs/firebase/"+V+"/firebase-app-compat.min.js","https://cdn.jsdelivr.net/npm/firebase@"+V+"/firebase-app-compat.js"];
+const LD=LA.map(x=>x.replace("app-compat","database-compat"));
+function fail(){$("fb").textContent="❌ Firebase မချိတ်နိုင်ပါ - Internet/VPN စစ်ပါ"}
+function startFirebase(boot){ld(LA,a=>a?ld(LD,b=>b?boot():fail()):fail())}
+function openDB(){try{firebase.database.INTERNAL.forceLongPolling()}catch(e){}firebase.initializeApp(firebaseConfig);return firebase.database()}
+let db=null,name=localStorage.getItem("dg_user")||"",user=null,target="",busy=false,open=true,started=false;
+const err=m=>$("er").textContent=m||"";
+startFirebase(boot);
+function boot(){db=openDB();
+  db.ref(".info/connected").on("value",s=>$("st").innerHTML=s.val()?'<i class="on"></i>Online':'<i class="off"></i>Offline - ခဏစောင့်ပါ');
+  if(name)start()}
+async function login(){
+  const n=$("un").value.trim().toLowerCase();
+  if(!n)return err("Username ထည့်ပါ");
+  if(!/^[a-z0-9_]+$/.test(n))return err("Username မှားနေပါတယ် (a-z, 0-9 ပဲ)");
+  if(!db)return err("Firebase မချိတ်ရသေးပါ၊ ခဏစောင့်ပါ");
+  err("စစ်ဆေးနေသည်...");
+  try{const s=await db.ref("users/"+n).once("value");
+    if(!s.exists())return err("ဒီ Username မရှိပါ");
+    name=n;localStorage.setItem("dg_user",n);start();
+  }catch(e){err("Error: "+(e.code||e.message))}
+}
+function logout(){localStorage.removeItem("dg_user");location.reload()}
+function start(){
+  if(started)return;started=true;err("");
+  $("lg").style.display="none";$("gm").style.display="block";$("me").textContent=name;
+  db.ref("config/target").on("value",s=>{target=s.val()||"";
+    $("tg").innerHTML=target?[...target].map(c=>'<div class="d">'+c+'</div>').join(""):"<i>Admin မသတ်မှတ်သေးပါ</i>";btn()});
+  db.ref("config/open").on("value",s=>{open=s.val()!==false;btn();if(!open)$("m").textContent="⏸ ဂိမ်းကို ခေတ္တပိတ်ထားပါတယ်";else if(!busy)$("m").textContent=""});
+  db.ref("users/"+name).on("value",s=>{user=s.val();
+    if(!user){logout();return}
+    $("sp").textContent=user.spins||0;$("wn").textContent=user.wins||0;btn();
+    if(!busy&&user.result)dice(user.result);
+  },e=>err("Error: "+(e.code||e.message)));
+}
+const btn=()=>{$("sb").disabled=busy||!open||!user||!(user.spins>0)||!target};
+const dice=r=>{$("dc").innerHTML=[...r].map(c=>'<div class="d">'+c+'</div>').join("")};
+const rnd=()=>Math.floor(Math.random()*6)+1;
+function beep(f,d){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
+function confetti(){for(let i=0;i<40;i++){const e=document.createElement("div");e.textContent=["🎉","✨","🎊","⭐"][i%4];e.style.cssText="position:fixed;top:-30px;left:"+Math.random()*100+"vw;font-size:24px;transition:transform 3s linear,opacity 3s;z-index:9";document.body.appendChild(e);requestAnimationFrame(()=>{e.style.transform="translateY(105vh)";e.style.opacity=0});setTimeout(()=>e.remove(),3500)}}
+function spin(){
+  if(busy||!open||!user||!(user.spins>0)||!target)return;
+  busy=true;btn();err("");$("m").textContent="";$("dc").classList.add("rolling");
+  const win=!!user.force;let res;
+  if(win)res=target;else do{res=""+rnd()+rnd()+rnd()}while(res===target);
+  let t=0;const iv=setInterval(()=>{dice(""+rnd()+rnd()+rnd());beep(300+t*30,.05);if(++t>=15){clearInterval(iv);done(res,win)}},90);
+}
+async function done(res,win){
+  try{
+    const r=await db.ref("users/"+name).transaction(u=>{if(!u||!(u.spins>0))return;u.spins--;u.result=res;if(win){u.won=true;u.force=false;u.wins=(u.wins||0)+1;u.lastWin=Date.now()}return u});
+    busy=false;$("dc").classList.remove("rolling");
+    if(r.committed){dice(res);
+      if(win){$("m").textContent="🏆 နိုင်ပါပြီ!";confetti();beep(880,.2);setTimeout(()=>beep(1175,.35),200)}
+      else $("m").textContent="😅 မတူပါ၊ ထပ်ကြိုးစားပါ";
+    }
+  }catch(e){busy=false;$("dc").classList.remove("rolling");err("Error: "+(e.code||e.message))}
+  btn();
+}
+</script></body></html>
