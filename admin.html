@@ -18,7 +18,7 @@ button,.tg{display:inline-block;width:auto;padding:8px 12px;font-size:14px;margi
 #lk{word-break:break-all;color:#7dd3fc;font-size:13px}.big{font-size:22px;color:#f5c451;font-weight:800}
 </style></head><body><div class="w">
 <div class="logo">👑 LEO ADMIN</div>
-<div id="lock" class="card"><h3>Admin Login</h3><input id="pw" type="password" placeholder="Admin PIN" style="width:100%"><button onclick="login()">ဝင်မည်</button><span id="er" style="color:#f87171"></span></div>
+<div id="lock" class="card"><h3>Admin Login</h3><input id="pw" type="password" placeholder="Admin PIN" style="width:100%" autocomplete="off" onkeydown="if(event.key==='Enter')login()"><button onclick="login()">ဝင်မည်</button><span id="er" style="color:#f87171"></span></div>
 <div id="pn" class="hide">
 <div class="card"><h3>🔗 Player Link</h3><div id="lk"></div><button onclick="cp()">Copy</button></div>
 <div class="card t"><h3>🎯 Target (1-6)</h3><input id="t1" maxlength="1" inputmode="numeric"><input id="t2" maxlength="1" inputmode="numeric"><input id="t3" maxlength="1" inputmode="numeric">
